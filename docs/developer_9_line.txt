@@ -1,0 +1,176 @@
+#-------------------------------------------------------------------------------------#
+# Project Setup & Development 9 Line
+#-------------------------------------------------------------------------------------#
+# 
+# INITIAL SETUP:
+# 1. Create virtual environment:    python -m venv venv
+# 2. Activate virtual environment:
+#    - Windows:                    .\venv\Scripts\activate
+#    - Unix/MacOS:                 source venv/bin/activate
+# 3. Install requirements:         pip install -r requirements.txt
+# 4. Create .env file:            cp .env.example .env
+# 5. Update dependencies:          pip freeze > requirements.txt
+#
+# PYTHON DEVELOPMENT COMMANDS:
+# Package Management:
+# 1. List outdated packages:      pip list --outdated
+# 2. Show package info:           pip show package_name
+# 3. Uninstall package:          pip uninstall package_name
+# 4. Install dev dependencies:    pip install -r requirements-dev.txt
+# 5. Upgrade pip:                python -m pip install --upgrade pip
+# 6. Install package:            pip install package_name==version
+#
+# Virtual Environment:
+# 1. List installed packages:     pip list
+# 2. Export dependencies:         pip freeze > requirements.txt
+# 3. Deactivate venv:            deactivate
+# 4. Remove venv:                rm -rf venv
+#
+# Python Interactive:
+# 1. Start Python REPL:          python
+# 2. Start IPython:              ipython
+# 3. Start debugger:             python -m pdb script.py
+# 4. Profile code:               python -m cProfile script.py
+#
+# DEVELOPMENT WORKFLOW:
+# Code Quality:
+# 1. Run tests:                   pytest
+# 2. Run specific test:           pytest tests/test_file.py -k test_name
+# 3. Run with coverage:           pytest --cov=app tests/
+# 4. Run linting:                 flake8
+# 5. Format code:                 black .
+# 6. Sort imports:                isort .
+# 7. Type checking:               mypy .
+# 8. Security checks:             bandit -r .
+# 9. Generate coverage:           coverage run -m pytest
+#                                coverage report
+#                                coverage html
+#
+# STREAMLIT COMMANDS:
+# Development:
+# 1. Run app:                     streamlit run app.py
+# 2. Run with custom port:        streamlit run app.py --server.port 8502
+# 3. Enable debug mode:           streamlit run app.py --logger.level=debug
+# 4. Clear cache:                 streamlit cache clear
+# 5. Show all config options:     streamlit config show
+# 6. Create new component:        streamlit create my_component
+#
+# Production:
+# 1. Run in production:           streamlit run app.py --server.address=0.0.0.0
+# 2. Set memory limit:            streamlit run app.py --server.maxUploadSize=50
+# 3. Enable authentication:       streamlit run app.py --server.enableCORS=false
+#
+# GIT COMMANDS:
+# Basic Operations:
+# 1. Initialize repository:        git init
+# 2. Add files to staging:        git add .
+# 3. Commit changes:              git commit -m "your message"
+# 4. Push to remote:              git push -u origin branch-name
+# 5. Pull latest changes:         git pull origin branch-name
+# 
+# Branching:
+# 1. Create & switch branch:      git checkout -b branch-name
+# 2. Switch branches:             git checkout branch-name
+# 3. List branches:               git branch
+# 4. Delete branch:               git branch -d branch-name
+# 5. Merge branch:                git merge branch-name
+#
+# Advanced Operations:
+# 1. Fetch updates:               git fetch origin
+# 2. Rebase branch:               git rebase main
+# 3. Cherry-pick commit:          git cherry-pick commit-hash
+# 4. Reset to commit:             git reset --hard commit-hash
+# 5. Clean untracked files:       git clean -fd
+#
+# Status & History:
+# 1. Check status:                git status
+# 2. View commit history:         git log
+# 3. View changes:                git diff
+# 4. Discard changes:             git checkout -- <file>
+# 5. Stash changes:               git stash
+# 6. Apply stashed changes:       git stash pop
+# 7. Show commit details:         git show commit-hash
+#
+# GIT COMMIT MESSAGE STRUCTURE:
+# Format:
+# <type>(<scope>): <subject>
+# <BLANK LINE>
+# <body>
+# <BLANK LINE>
+# <footer>
+#
+# Types:
+# - feat:     New feature
+# - fix:      Bug fix
+# - docs:     Documentation changes
+# - style:    Formatting, missing semi colons, etc
+# - refactor: Code restructuring
+# - test:     Adding tests
+# - chore:    Maintenance tasks
+# - perf:     Performance improvements
+# - ci:       CI/CD changes
+#
+# Example:
+# feat(auth): implement JWT authentication
+#
+# - Add JWT token generation
+# - Implement token validation middleware
+# - Add refresh token functionality
+#
+# Closes #123
+#
+# DOCKER COMMANDS:
+# Basic:
+# 1. Build image:                 docker build -t app-name .
+# 2. Run container:               docker run -p 8501:8501 app-name
+# 3. List containers:             docker ps
+# 4. Stop container:              docker stop <container-id>
+# 5. Remove container:            docker rm <container-id>
+# 6. List images:                 docker images
+#
+# Advanced:
+# 1. Build with no cache:         docker build --no-cache -t app-name .
+# 2. Run interactive shell:       docker exec -it <container-id> bash
+# 3. View logs:                   docker logs <container-id>
+# 4. Compose up:                  docker-compose up -d
+# 5. Compose down:                docker-compose down
+#
+# PROJECT STRUCTURE:
+# ├── app/                        # Application source code
+# │   ├── config/                 # Configuration files
+# │   ├── models/                 # Data models
+# │   ├── services/              # Business logic
+# │   ├── api/                   # API endpoints
+# │   └── utils/                 # Utility functions
+# ├── tests/                      # Test files
+# │   ├── unit/                  # Unit tests
+# │   └── integration/           # Integration tests
+# ├── frontend/                   # Frontend code
+# ├── docs/                      # Documentation
+# ├── scripts/                   # Utility scripts
+# ├── .env                        # Environment variables
+# ├── .gitignore                 # Git ignore rules
+# ├── requirements.txt           # Python dependencies
+# ├── requirements-dev.txt       # Development dependencies
+# ├── Dockerfile                 # Docker configuration
+# └── README.md                  # Project documentation
+#
+# COMMON ISSUES & SOLUTIONS:
+# 1. Port already in use:         netstat -ano | findstr :<PORT>
+#                                taskkill /PID <PID> /F
+# 2. Dependency conflicts:        pip install --upgrade pip
+#                                pip install -r requirements.txt --upgrade
+# 3. Git merge conflicts:         git status
+#                                git merge --abort
+#                                git reset --hard origin/main
+# 4. Streamlit cache issues:      streamlit cache clear
+#                                streamlit run --browser.serverAddress="localhost"
+#
+# USEFUL LINKS:
+# - Project Documentation:        <link-to-docs>
+# - API Documentation:            <link-to-api-docs>
+# - Issue Tracker:               <link-to-issues>
+# - CI/CD Pipeline:              <link-to-pipeline>
+# - Monitoring Dashboard:        <link-to-dashboard>
+#
+#-------------------------------------------------------------------------------------#
