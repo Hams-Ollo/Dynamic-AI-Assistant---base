@@ -1,170 +1,243 @@
-# 🚀 Project Template & Implementation
+# 🤖 Multi-Agent Project Template
 
-This repository serves dual purposes:
+A powerful, flexible framework for building production-ready multi-agent AI systems. This template provides a robust foundation for developing sophisticated AI applications, including chatbots, automation systems, and distributed AI solutions.
 
-1. A working implementation of an AI-powered application (currently: Podcast & AI Assistant)
-2. A template for quickly bootstrapping new Python projects with best practices
+## ✨ Key Features
 
-## 📋 Template Features
+- 🎯 **Modular Agent Architecture**
+  - Plug-and-play agent system
+  - Flexible agent communication
+  - Built-in state management
+  - Extensible agent behaviors
 
-### 🏗️ Project Structure
+- 🧠 **Advanced Memory Systems**
+  - Multiple memory backends
+  - Vector storage support
+  - Persistent memory options
+  - Configurable retention policies
 
-```curl
-project_root/
-├── app/                    # Core application code
-│   ├── agents/            # AI agents and processors
-│   │   ├── __init__.py
-│   │   └── chat_agent.py  # Example: Chat implementation
-│   └── utils/             # Utility functions
-│       ├── __init__.py
-│       └── tools.py       # Common utilities
-├── frontend/              # UI components
-│   └── streamlit.py       # Streamlit interface
-├── tests/                 # Test suite
-│   └── test_sample.py     # Test examples
-├── docs/                  # Documentation
-│   ├── api.md            # API documentation
-│   └── development.md    # Development guidelines
-├── .env.example          # Environment variables template
-├── .gitignore           # Git ignore rules
-├── requirements.txt     # Production dependencies
-├── CHANGELOG.txt       # Version history
-└── README.md          # Project documentation
-```
+- ⚡ **Modern Infrastructure**
+  - Async/await support
+  - REST API endpoints
+  - WebSocket capabilities
+  - Scalable architecture
 
-### 🎯 Key Features
+- 🔒 **Enterprise Security**
+  - API key authentication
+  - Rate limiting
+  - CORS protection
+  - Secure configuration
 
-- **Standardized File Headers**: Consistent documentation across Python files
-- **Environment Management**: Ready-to-use virtual environment setup
-- **Documentation Templates**: Pre-structured documentation files
-- **Testing Framework**: Basic test setup with examples
-- **Development Guidelines**: Best practices and coding standards
-- **Version Control**: Git setup with .gitignore
-- **Dependency Management**: Requirements file structure
-
-## 🛠️ Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
 
 - Python 3.8+
+- pip (Python package manager)
 - Git
-- Virtual environment tool (venv)
 
-### Quick Start
+### Installation
 
-1. **Clone & Rename**
+1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/project-template.git new-project
-   cd new-project
+   git clone https://github.com/yourusername/multi-agent-project.git
+   cd multi-agent-project
    ```
 
-2. **Environment Setup**
+2. Create a virtual environment:
 
    ```bash
    python -m venv venv
+   
    # Windows
    .\venv\Scripts\activate
+   
    # Unix/MacOS
    source venv/bin/activate
    ```
 
-3. **Install Dependencies**
+3. Install dependencies:
 
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Configure Environment**
+4. Set up configuration:
 
    ```bash
+   cp config/default/default_config.json config/custom/config.json
    cp .env.example .env
-   # Edit .env with your configurations
    ```
 
-5. **Run Application**
+5. Run the application:
 
    ```bash
-   streamlit run frontend/streamlit.py
+   python src/main.py
    ```
 
-## 📦 Current Implementation: Podcast & AI Assistant
+## 📁 Project Structure
 
-### Features
+```curl
+multi-agent-project/
+├── src/                      # Source code
+│   ├── agents/              # Agent definitions
+│   │   ├── base/           # Base agent classes
+│   │   └── specialized/    # Custom agents
+│   ├── core/               # Core functionality
+│   │   ├── memory/        # Memory systems
+│   │   ├── llm/           # LLM integrations
+│   │   └── utils/         # Utilities
+│   └── interfaces/         # External interfaces
+├── config/                  # Configuration
+│   ├── default/           # Default settings
+│   └── custom/            # User settings
+├── data/                   # Data storage
+├── tests/                  # Test suite
+├── docs/                   # Documentation
+└── notebooks/             # Jupyter notebooks
+```
 
-- **AI Chat Interface**: Groq-powered conversational AI
-- **Document Processing**: Support for multiple formats
-- **RAG System**: ChromaDB-based knowledge retrieval
-- **Modern UI**: Streamlit-based interface
+## 🛠️ Development Guide
 
-### Tech Stack
+### Creating a New Agent
 
-- **LLM**: Groq's Mixtral-8x7b-32768
-- **Framework**: LangChain
-- **Vector Store**: ChromaDB
-- **Frontend**: Streamlit
-- **Document Processing**: Unstructured, python-docx, pdfminer.six
+1. Create a new agent class:
 
-## 🔧 Development
+   ```python
+   from src.agents.base.base_agent import BaseAgent
 
-### File Structure
+   class MyCustomAgent(BaseAgent):
+       async def process(self, input_data):
+           # Process input and return response
+           return processed_result
 
-Each Python file follows a standardized header format:
+       async def handle_message(self, message):
+           # Handle inter-agent communication
+           return response
+   ```
+
+2. Configure the agent:
+
+   ```json
+   {
+       "agents": {
+           "my_custom_agent": {
+               "type": "MyCustomAgent",
+               "config": {
+                   "memory_type": "vector",
+                   "llm_model": "gpt-4"
+               }
+           }
+       }
+   }
+   ```
+
+### Using Memory Systems
 
 ```python
-#-------------------------------------------------------------------------------------#
-# File: filename.py
-# Description: Brief description of the file's purpose
-# Author: @username
-#
-# INITIAL SETUP:
-# 1. Create virtual environment:    python -m venv venv
-# 2. Activate virtual environment:
-#    - Windows:                    .\venv\Scripts\activate
-#    - Unix/MacOS:                 source venv/bin/activate
-# 3. Install requirements:         pip install -r requirements.txt
-# 4. Create .env file:            cp .env.example .env
-# 5. Update dependencies:          pip freeze > requirements.txt
-#
-#-------------------------------------------------------------------------------------#
+# Get a memory instance
+memory = memory_manager.get_memory("agent_memory")
+
+# Store data
+memory.add("conversation_1", {"user": "Hello!", "response": "Hi there!"})
+
+# Retrieve data
+data = memory.get("conversation_1")
+
+# Search memory
+results = memory.search("hello")
 ```
 
-### Common Tasks
+### Configuration Management
+
+```python
+from src.core.utils.config_manager import ConfigManager
+
+# Initialize config
+config = ConfigManager()
+
+# Get configuration values
+api_key = config.get("security.api_key")
+memory_config = config.get("memory.default_store")
+
+# Update custom configuration
+config.save_custom_config({
+    "agents": {
+        "my_agent": {"enabled": True}
+    }
+})
+```
+
+## 🧪 Testing
+
+Run the test suite:
 
 ```bash
-# Development
-pip install -r requirements.txt    # Install dependencies
-pytest                            # Run tests
-black .                           # Format code
-flake8                           # Lint code
+# Run all tests
+pytest
 
-# Git Operations
-git checkout -b feature-name      # Create new branch
-git commit -m "type: message"     # Commit changes
-git push origin feature-name      # Push changes
+# Run specific test category
+pytest tests/unit/
+pytest tests/integration/
+
+# Run with coverage
+pytest --cov=src tests/
 ```
 
-## 📝 Documentation
+## 📚 Documentation
 
-- [API Documentation](docs/api.md)
-- [Development Guidelines](docs/development.md)
-- [Change Log](CHANGELOG.txt)
+- [API Reference](docs/api/README.md)
+- [Agent Development Guide](docs/guides/agents.md)
+- [Configuration Guide](docs/guides/configuration.md)
+- [Memory Systems](docs/guides/memory.md)
+- [Security Guide](docs/guides/security.md)
+- [Deployment Guide](docs/guides/deployment.md)
+
+## 🔧 Configuration
+
+### Environment Variables
+
+```env
+AGENT_API_KEY=your_api_key
+AGENT_LLM_PROVIDER=openai
+AGENT_MEMORY_TYPE=vector
+AGENT_LOG_LEVEL=INFO
+```
+
+### Custom Configuration
+
+Create `config/custom/config.json`:
+
+```json
+{
+    "agents": {
+        "custom_agent": {
+            "enabled": true,
+            "memory": {
+                "type": "vector",
+                "max_items": 10000
+            }
+        }
+    }
+}
+```
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📫 Support
+### Development Guidelines
 
-For support:
-
-- Open an issue
-- Review documentation
-- Contact maintainers
+- Follow PEP 8 style guide
+- Add tests for new features
+- Update documentation
+- Use type hints
+- Keep functions focused and modular
 
 ## 📄 License
 
@@ -172,10 +245,26 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- [Groq](https://groq.com) - LLM API
-- [LangChain](https://python.langchain.com) - AI framework
-- [Streamlit](https://streamlit.io) - UI components
-- [ChromaDB](https://www.trychroma.com) - Vector storage
+- Built with modern AI frameworks and libraries
+- Inspired by best practices in distributed systems
+- Community contributions welcome
+
+## 🆘 Support
+
+- Open an issue for bug reports
+- Check existing issues before reporting
+- Provide detailed reproduction steps
+- Include relevant logs and configurations
+
+## 🔮 Future Plans
+
+- [ ] Additional memory backends
+- [ ] Enhanced monitoring
+- [ ] Agent marketplace
+- [ ] GUI interface
+- [ ] Container support
+- [ ] Cloud deployment templates
 
 ---
-*This README serves as both documentation for the current project and a template for future projects. Feel free to customize it based on your specific needs.*
+
+Built with ❤️ by the AI community

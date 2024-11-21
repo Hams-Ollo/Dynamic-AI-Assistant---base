@@ -1,0 +1,80 @@
+{
+    "system": {
+        "log_level": "INFO",
+        "max_retries": 3,
+        "timeout": 30,
+        "environment": "development",
+        "debug": false
+    },
+    "agents": {
+        "defaults": {
+            "memory": {
+                "type": "simple",
+                "max_items": 1000
+            },
+            "llm": {
+                "provider": "openai",
+                "model": "gpt-3.5-turbo",
+                "temperature": 0.7,
+                "max_tokens": 150
+            }
+        }
+    },
+    "memory": {
+        "default_store": "local",
+        "stores": {
+            "local": {
+                "type": "sqlite",
+                "path": "data/memory.db"
+            },
+            "vector": {
+                "type": "chroma",
+                "path": "data/embeddings",
+                "embedding_model": "sentence-transformers/all-mpnet-base-v2",
+                "dimension": 768,
+                "similarity_metric": "cosine"
+            }
+        }
+    },
+    "security": {
+        "api_key_required": true,
+        "cors_origins": ["http://localhost:3000"],
+        "rate_limit": {
+            "requests": 100,
+            "per_seconds": 60
+        },
+        "jwt": {
+            "algorithm": "HS256",
+            "access_token_expire_minutes": 30
+        },
+        "agents": {
+            "permissions": {
+                "file_access": ["read"],
+                "network_access": true,
+                "system_commands": false
+            },
+            "isolation": {
+                "enabled": true,
+                "max_memory_mb": 512,
+                "max_cpu_percent": 50
+            }
+        }
+    },
+    "interfaces": {
+        "api": {
+            "host": "localhost",
+            "port": 8000,
+            "workers": 4
+        },
+        "websocket": {
+            "enabled": true,
+            "path": "/ws"
+        }
+    },
+    "logging": {
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "file": "logs/app.log",
+        "max_size": 10485760,
+        "backup_count": 5
+    }
+}
