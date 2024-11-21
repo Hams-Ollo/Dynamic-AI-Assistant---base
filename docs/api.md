@@ -2,32 +2,41 @@
 
 ## Overview
 
-This document describes the APIs and interfaces available in the Program_and_Chill project.
+This document outlines the API structure for both the template and current implementation.
 
-## Agent System API
+## Core Components
 
-### Agent Creation
+### Agent System
+
+#### Base Agent Interface
 
 ```python
-from app.agents import BaseAgent
-
-class CustomAgent(BaseAgent):
+class BaseAgent:
     def __init__(self, config: dict):
-        super().__init__(config)
-        self.capabilities = ["text", "code", "analysis"]
+        """Initialize base agent with configuration."""
+        self.config = config
+        self.capabilities = []
+
+    async def process_message(self, message: str) -> dict:
+        """Process incoming message and return response."""
+        raise NotImplementedError
 ```
 
-### Agent Communication
+#### Current Implementation: Chat Agent
 
 ```python
-async def communicate(message: str) -> str:
-    """Send message to agent and get response."""
-    return await agent.process_message(message)
+class ChatAgent(BaseAgent):
+    def __init__(self, config: dict):
+        super().__init__(config)
+        self.llm = GroqChatModel(
+            api_key=config["api_key"],
+            model=config.get("model", "mixtral-8x7b-32768")
+        )
 ```
 
 ## REST API Endpoints
 
-### Authentication Endpoints
+### Authentication
 
 ```bash
 POST /api/auth/token
@@ -39,7 +48,7 @@ Content-Type: application/json
 }
 ```
 
-### Agent Interaction
+### Agent Communication
 
 ```bash
 POST /api/agent/chat
@@ -48,7 +57,6 @@ Content-Type: application/json
 
 {
     "message": "string",
-    "agent_id": "string",
     "context": {}
 }
 ```
@@ -67,22 +75,13 @@ const ws = new WebSocket('ws://localhost:8501/ws/agent');
 {
     "type": "message",
     "content": "string",
-    "agent_id": "string",
     "timestamp": "ISO-8601"
 }
 ```
 
 ## Error Handling
 
-### Error Codes
-
-- 400: Bad Request
-- 401: Unauthorized
-- 403: Forbidden
-- 404: Not Found
-- 500: Internal Server Error
-
-### Error Response Format
+### Standard Error Response
 
 ```json
 {
@@ -94,19 +93,27 @@ const ws = new WebSocket('ws://localhost:8501/ws/agent');
 }
 ```
 
+### Error Codes
+
+- 400: Bad Request
+- 401: Unauthorized
+- 403: Forbidden
+- 404: Not Found
+- 500: Internal Server Error
+
 ## Rate Limiting
 
-- 100 requests per minute per IP
-- 1000 requests per hour per user
-- Exponential backoff recommended
+- Default: 100 requests per minute per IP
+- Authenticated: 1000 requests per hour per user
+- Recommended: Implement exponential backoff
 
 ## Security
 
 ### Authentication Implementation
 
 - JWT-based authentication
-- Tokens expire after 24 hours
-- Refresh tokens available
+- 24-hour token expiration
+- Refresh token support
 
 ### Authorization
 
@@ -114,7 +121,7 @@ const ws = new WebSocket('ws://localhost:8501/ws/agent');
 - Scoped permissions
 - API key management
 
-## Examples
+## Client Examples
 
 ### Python Client
 
@@ -166,29 +173,13 @@ API versioning follows semantic versioning:
 - Minor version: New features
 - Patch version: Bug fixes
 
-## Migration Guide
-
-### v1.x to v2.0
-
-- Updated authentication flow
-- New response format
-- Additional endpoints
-
 ## Support
 
 For API support:
 
-- Email: <api@example.com>
+- Email: <api-support@example.com>
 - Documentation: /docs/api
 - Status: status.example.com
 
-## API Error Format
-
-```json
-{
-    "error": {
-        "code": "string",
-        "message": "string",
-        "details": {}
-    }
-}
+---
+*This API documentation serves as both a reference for the current implementation and a template for future projects.*

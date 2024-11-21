@@ -1,3 +1,4 @@
+
 #-------------------------------------------------------------------------------------#
 # Project Setup & Development Guidelines: Program_and_Chill
 #-------------------------------------------------------------------------------------#
@@ -58,7 +59,7 @@
 # 5. Clean untracked files:       git clean -fd
 #
 #-------------------------------------------------------------------------------------#
-
+#----------# TITLE  #----------#
 """
 Program & Chill AI Assistant
 ---------------------------
@@ -68,6 +69,8 @@ Author: @hams_ollo
 Version: 0.0.1
 """
 
+#-------------------------------------------------------------------------------------#
+#----------# IMPORTS  #----------#
 import streamlit as st
 import os
 import logging
@@ -89,3 +92,20 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+#-------------------------------------------------------------------------------------#
+#----------# CONFIG  #----------#
+API_KEY = os.getenv("API_KEY")
+API_SECRET = os.getenv("API_SECRET")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
+OPENAI_API_TYPE = os.getenv("OPENAI_API_TYPE")
+
+
+#-------------------------------------------------------------------------------------#
+#----------# FUNCTIONS  #----------#
+
+
+#-------------------------------------------------------------------------------------#
+#----------# MAIN  #----------#

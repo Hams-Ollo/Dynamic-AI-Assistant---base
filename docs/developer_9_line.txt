@@ -11,40 +11,177 @@
 # 4. Create .env file:            cp .env.example .env
 # 5. Update dependencies:          pip freeze > requirements.txt
 #
-# PYTHON DEVELOPMENT COMMANDS:
-# Package Management:
-# 1. List outdated packages:      pip list --outdated
-# 2. Show package info:           pip show package_name
-# 3. Uninstall package:          pip uninstall package_name
-# 4. Install dev dependencies:    pip install -r requirements-dev.txt
-# 5. Upgrade pip:                python -m pip install --upgrade pip
-# 6. Install package:            pip install package_name==version
-#
-# Virtual Environment:
-# 1. List installed packages:     pip list
-# 2. Export dependencies:         pip freeze > requirements.txt
-# 3. Deactivate venv:            deactivate
-# 4. Remove venv:                rm -rf venv
-#
-# Python Interactive:
-# 1. Start Python REPL:          python
-# 2. Start IPython:              ipython
-# 3. Start debugger:             python -m pdb script.py
-# 4. Profile code:               python -m cProfile script.py
-#
-# DEVELOPMENT WORKFLOW:
-# Code Quality:
-# 1. Run tests:                   pytest
-# 2. Run specific test:           pytest tests/test_file.py -k test_name
-# 3. Run with coverage:           pytest --cov=app tests/
-# 4. Run linting:                 flake8
-# 5. Format code:                 black .
-# 6. Sort imports:                isort .
-# 7. Type checking:               mypy .
-# 8. Security checks:             bandit -r .
-# 9. Generate coverage:           coverage run -m pytest
-#                                coverage report
-#                                coverage html
+# DEVELOPER QUICK REFERENCE
+#=======================
+
+## 1. ENVIRONMENT SETUP
+#---------------------
+# Create and activate virtual environment
+python -m venv venv
+.\venv\Scripts\activate  # Windows
+source venv/bin/activate  # Unix/MacOS
+
+# Dependencies
+pip install -r requirements.txt  # Install
+pip freeze > requirements.txt    # Update
+pip install package==version    # Specific version
+
+## 2. GIT ESSENTIALS
+#------------------
+# Basic workflow
+git status                      # Check status
+git pull origin main           # Get latest
+git checkout -b feature/name   # New branch
+git add .                      # Stage all
+git commit -m "type: message"  # Commit
+git push origin branch-name    # Push
+
+# Fix common issues
+git stash                     # Save changes
+git stash pop                 # Restore changes
+git reset --hard HEAD         # Undo all
+git reset --soft HEAD^        # Undo commit
+git clean -fd                 # Remove untracked
+
+## 3. CODE QUALITY
+#----------------
+# Formatting
+black .                       # Format code
+isort .                      # Sort imports
+flake8                       # Lint code
+mypy .                       # Type check
+
+# Testing
+pytest                       # Run tests
+pytest -v                    # Verbose
+pytest -k "test_name"        # Specific test
+pytest --cov=app tests/      # Coverage
+
+## 4. DOCKER COMMANDS
+#------------------
+# Basic operations
+docker build -t name .       # Build image
+docker run -p 8501:8501 name # Run container
+docker ps                    # List running
+docker stop <container-id>   # Stop container
+docker-compose up           # Start services
+
+## 5. DATABASE
+#------------
+# PostgreSQL
+psql -U username -d dbname   # Connect
+\l                          # List DBs
+\dt                         # List tables
+\q                          # Quit
+
+# MongoDB
+mongosh                     # Connect shell
+show dbs                    # List DBs
+use dbname                  # Switch DB
+show collections            # List collections
+
+## 6. API TESTING
+#--------------
+# cURL
+curl -X GET url            # GET request
+curl -X POST url -d data   # POST request
+
+# HTTPie (more readable)
+http GET url              # GET request
+http POST url key=value   # POST request
+
+## 7. DEBUGGING
+#------------
+# Python debugger
+breakpoint()              # Set breakpoint
+n                        # Next line
+s                        # Step into
+c                        # Continue
+p variable              # Print variable
+q                       # Quit
+
+# Logging
+logger.debug("message")  # Debug level
+logger.info("message")   # Info level
+logger.error("message")  # Error level
+
+## 8. PERFORMANCE
+#--------------
+# Profiling
+python -m cProfile script.py  # Profile script
+memory_profiler              # Memory usage
+line_profiler               # Line-by-line
+
+# Monitoring
+top                         # System usage
+htop                       # Better top
+df -h                      # Disk usage
+
+## 9. SECURITY
+#-----------
+# Environment
+cp .env.example .env       # Create env file
+chmod 600 .env             # Secure perms
+
+# SSH
+ssh-keygen -t ed25519     # Generate key
+ssh-copy-id user@host     # Copy key
+
+## QUICK FIXES
+#------------
+# Port conflicts
+netstat -ano | findstr :8501  # Find process
+taskkill /PID <PID> /F       # Kill process
+
+# Virtual env issues
+deactivate                    # Exit venv
+rm -rf venv                   # Remove venv
+python -m venv venv           # Recreate
+
+# Package issues
+pip install --no-cache-dir    # Clean install
+pip install -U package        # Upgrade
+
+## PRODUCTIVITY
+#-------------
+# VSCode
+Ctrl+Shift+P               # Command palette
+Ctrl+P                    # Quick open
+Ctrl+`                    # Terminal
+Alt+Up/Down              # Move line
+Ctrl+D                   # Multi-select
+
+# Terminal
+Ctrl+R                   # Search history
+Ctrl+L                   # Clear screen
+!!                       # Last command
+cd -                     # Previous dir
+
+## BEST PRACTICES
+#--------------
+# Commits
+feat: new feature
+fix: bug fix
+docs: documentation
+style: formatting
+refactor: code structure
+test: adding tests
+chore: maintenance
+
+# Python
+- Use type hints
+- Write docstrings
+- Follow PEP 8
+- Keep functions small
+- Test edge cases
+
+Remember:
+1. Always pull before starting work
+2. Keep commits atomic and descriptive
+3. Document significant changes
+4. Test before pushing
+5. Review your own code first
+
 #
 # STREAMLIT COMMANDS:
 # Development:
