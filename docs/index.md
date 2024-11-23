@@ -1,37 +1,46 @@
-# Program_and_Chill Documentation
+# Multi-Agent Chatbot Template Documentation
 
-## Table of Contents
+Welcome to the documentation for the Multi-Agent Chatbot Template! This documentation will help you understand, set up, and extend the template for your own chatbot applications.
 
-1. [Getting Started](./getting_started.md)
-2. [Development Guidelines](./development_guidelines.md)
-3. [Contributing Guide](./contributing.md)
-4. [Code Style Guide](./code_style.md)
-5. [Testing Guide](./testing.md)
-6. [API Documentation](./api.md)
-7. [Agent Architecture](./agents.md)
-8. [Environment Setup](./environment_setup.md)
-9. [Deployment Guide](./deployment.md)
-10. [Troubleshooting](./troubleshooting.md)
+## 📚 Documentation Sections
 
-## Quick Links
+### Getting Started
 
-- [Project README](../README.md)
-- [GitHub Repository](https://github.com/YOUR_USERNAME/Program_and_Chill)
-- [Issue Tracker](https://github.com/YOUR_USERNAME/Program_and_Chill/issues)
+- [Quick Start Guide](getting_started.md) - Get up and running in minutes
+- [Environment Setup](environment_setup.md) - Detailed environment configuration
+- [Development Guidelines](development_guidelines.md) - Best practices and coding standards
 
-## Documentation Structure
+### Technical Guides
 
-```
-docs/
-├── index.md                # This file
-├── getting_started.md      # Quick start guide
-├── development_guidelines.md # Development best practices
-├── contributing.md         # How to contribute
-├── code_style.md          # Code style guidelines
-├── testing.md             # Testing documentation
-├── api.md                 # API documentation
-├── agents.md              # Agent system architecture
-├── environment_setup.md   # Environment configuration
-├── deployment.md          # Deployment instructions
-└── troubleshooting.md     # Common issues and solutions
-```
+- [Agent Development](guides/agents.md) - Creating and customizing agents
+- [Configuration Guide](guides/configuration.md) - Advanced configuration options
+
+## 🚀 Key Features
+
+- **Modular Agent System**: Easily create and extend agents
+- **Document Processing**: Built-in support for handling various document types
+- **Memory Management**: Flexible memory systems with multiple backend options
+- **LLM Integration**: Pre-configured Groq integration with easy extension points
+- **Production Ready**: Includes logging, error handling, and security features
+
+## 🔧 Core Components
+
+- `ChatAgent`: Main chat agent implementation with LLM integration
+- `DocumentProcessor`: Handles document chunking and processing
+- `MemoryManager`: Manages conversation history and document storage
+- `ConfigManager`: Handles environment and application configuration
+- `LoggingManager`: Provides structured logging capabilities
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Development Guidelines](development_guidelines.md) for details on how to contribute.
+
+## 🆘 Getting Help
+
+- Check the relevant guide in our documentation
+- Open an issue on GitHub for bugs or feature requests
+- Review existing issues for common problems
+
+## 📝 License
+
+This project is licensed under the MIT License. See the LICENSE file for details.

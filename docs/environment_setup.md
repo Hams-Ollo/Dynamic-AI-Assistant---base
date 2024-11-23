@@ -1,214 +1,231 @@
 # Environment Setup Guide
 
-## Prerequisites
+This guide provides detailed instructions for setting up your development environment for the Multi-Agent Chatbot Template.
 
-- Python 3.8+
-- Git
-- Make (optional, but recommended)
-- Code editor (VSCode recommended)
+## System Requirements
 
-## Initial Setup
+### Minimum Requirements
 
-### 1. Repository Setup
+- Python 3.8 or higher
+- 4GB RAM
+- 2GB free disk space
+
+### Recommended
+
+- Python 3.10 or higher
+- 8GB RAM
+- 4GB free disk space
+- SSD for storage
+
+## Python Environment Setup
+
+### 1. Python Installation
+
+#### Windows
+
+1. Download Python from [python.org](https://python.org)
+2. Run the installer, ensuring you check "Add Python to PATH"
+3. Verify installation:
+
+   ```bash
+   python --version
+   pip --version
+   ```
+
+#### macOS
 
 ```bash
-# Clone template
-git clone https://github.com/yourusername/project-template.git new-project
-cd new-project
+# Using Homebrew
+brew install python
 
-# Initialize git
-git init
-git remote add origin your-repo-url
+# Verify installation
+python3 --version
+pip3 --version
 ```
 
-### 2. Python Environment
+#### Linux (Ubuntu/Debian)
+
+```bash
+sudo apt update
+sudo apt install python3 python3-pip python3-venv
+```
+
+### 2. Virtual Environment
 
 ```bash
 # Create virtual environment
 python -m venv venv
 
-# Activate environment
-# Windows
+# Activate on Windows
 .\venv\Scripts\activate
-# Unix/MacOS
+
+# Activate on Unix/MacOS
 source venv/bin/activate
 
 # Upgrade pip
-python -m pip install --upgrade pip
-
-# Install dependencies
-pip install -r requirements.txt
+pip install --upgrade pip
 ```
 
-### 3. Environment Variables
+## Dependencies Installation
 
-1. Create environment file:
+```bash
+# Install required packages
+pip install -r requirements.txt
 
-   ```bash
-   cp .env.example .env
-   ```
+# Optional: Install development dependencies
+pip install -r requirements-dev.txt
+```
 
-2. Configure variables:
+## Environment Configuration
 
-   ```bash
-   # API Keys
-   GROQ_API_KEY=your_key_here
-   
-   # Application Settings
-   DEBUG=True
-   LOG_LEVEL=INFO
-   
-   # Database Configuration (if needed)
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_NAME=your_db_name
-   ```
+### 1. Environment Variables
 
-## IDE Setup
+Create a `.env` file in the project root:
 
-### VSCode Configuration
+```env
+# Required
+GROQ_API_KEY=your-groq-api-key
 
-1. Install Extensions:
-   - Python
-   - Pylance
-   - Black Formatter
-   - isort
-   - GitLens
+# Optional
+LOG_LEVEL=INFO
+MEMORY_TYPE=buffer
+MEMORY_PATH=./data/memory
+MAX_TOKENS=4096
+TEMPERATURE=0.7
+```
 
-2. Workspace Settings:
+### 2. Configuration Options
 
-   ```json
-   {
-     "python.formatting.provider": "black",
-     "python.linting.enabled": true,
-     "python.linting.flake8Enabled": true,
-     "editor.formatOnSave": true,
-     "python.analysis.typeCheckingMode": "basic",
-     "files.trimTrailingWhitespace": true
-   }
-   ```
+#### Logging Configuration
 
-### PyCharm Setup
+```python
+# In .env
+LOG_LEVEL=DEBUG  # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+LOG_FORMAT=detailed  # Options: simple, detailed
+LOG_FILE=app.log  # Default: None (console only)
+```
 
-1. Enable:
-   - Black formatter
-   - Flake8 linting
-   - Type checking
-   - Git integration
+#### Memory Configuration
+
+```python
+# In .env
+MEMORY_TYPE=vector  # Options: buffer, vector
+MEMORY_PATH=./data/memory
+MEMORY_MAX_ITEMS=1000
+MEMORY_CLEANUP_INTERVAL=3600  # In seconds
+```
+
+#### LLM Configuration
+
+```python
+# In .env
+MODEL_NAME=llama3-groq-70b-8192-tool-use-preview
+TEMPERATURE=0.7
+MAX_TOKENS=4096
+TOP_P=0.9
+```
+
+## Directory Structure Setup
+
+```bash
+# Create necessary directories
+mkdir -p data/memory
+mkdir -p logs
+mkdir -p tests/fixtures
+```
 
 ## Development Tools
 
-### Code Quality Tools
+### 1. Code Formatting
 
 ```bash
-# Install development dependencies
-pip install black flake8 mypy pytest pytest-cov
+# Install formatters
+pip install black isort
 
-# Install pre-commit hooks
-pre-commit install
+# Run formatters
+black .
+isort .
 ```
 
-### Git Configuration
+### 2. Type Checking
 
 ```bash
-# Configure git
-git config --local user.name "Your Name"
-git config --local user.email "your.email@example.com"
+# Install mypy
+pip install mypy
 
-# Set up git hooks
-cp scripts/pre-commit .git/hooks/
-chmod +x .git/hooks/pre-commit
+# Run type checking
+mypy app/
 ```
 
-## Verification
-
-Run these commands to verify your setup:
+### 3. Testing Tools
 
 ```bash
-# Check Python version
-python --version
-
-# Verify packages
-pip list
+# Install testing tools
+pip install pytest pytest-cov pytest-asyncio
 
 # Run tests
 pytest
-
-# Start application
-streamlit run frontend/streamlit.py
 ```
 
-## Common Issues
+## IDE Setup
 
-### Package Installation Errors
+### VSCode
 
-```bash
-# Clean install
-pip install --no-cache-dir -r requirements.txt
+1. Install Python extension
+2. Configure settings.json:
 
-# If using pip-tools
-pip-compile requirements.in
-pip-sync
-```
+   ```json
+   {
+     "python.defaultInterpreterPath": "./venv/bin/python",
+     "python.formatting.provider": "black",
+     "python.linting.enabled": true,
+     "python.linting.mypyEnabled": true
+   }
+   ```
 
-### Virtual Environment Issues
+### PyCharm
 
-```bash
-# Windows
-deactivate
-rm -rf venv
-python -m venv venv
-.\venv\Scripts\activate
+1. Set project interpreter to venv
+2. Enable Black formatter
+3. Configure pytest as test runner
 
-# Unix/MacOS
-deactivate
-rm -rf venv
-python -m venv venv
-source venv/bin/activate
-```
+## Troubleshooting
 
-### Port Conflicts
+### Common Issues
 
-```bash
-# Windows
-netstat -ano | findstr :8501
-taskkill /PID <PID> /F
+1. **Virtual Environment Not Activating**
 
-# Unix/MacOS
-lsof -i :8501
-kill -9 <PID>
-```
+   ```bash
+   # Windows
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+   
+   # Unix
+   chmod +x venv/bin/activate
+   ```
+
+2. **Package Installation Errors**
+
+   ```bash
+   pip install --upgrade pip setuptools wheel
+   pip install -r requirements.txt --no-cache-dir
+   ```
+
+3. **Memory Path Issues**
+
+   ```bash
+   # Ensure directories exist
+   mkdir -p data/memory
+   chmod 755 data/memory
+   ```
 
 ## Next Steps
 
-1. Review the [Development Guidelines](./development_guidelines.md)
-2. Check out the [API Documentation](./api.md)
-3. Read the [Contributing Guide](./CONTRIBUTING.md)
+1. Review the [Getting Started Guide](getting_started.md)
+2. Check the [Development Guidelines](development_guidelines.md)
+3. Explore [Agent Development](guides/agents.md)
 
-## Docker Setup (Optional)
+## Additional Resources
 
-### Local Development
-
-```bash
-# Build image
-docker build -t project-name .
-
-# Run container
-docker run -p 8501:8501 project-name
-
-# Development with volume mount
-docker run -v $(pwd):/app -p 8501:8501 project-name
-```
-
-### Production
-
-```bash
-# Build production image
-docker build -t project-name:prod -f Dockerfile.prod .
-
-# Run with environment file
-docker run --env-file .env -p 8501:8501 project-name:prod
-```
-
----
-*This setup guide serves as both instructions for the current project and a template for future projects.*
+- [Python Virtual Environments](https://docs.python.org/3/tutorial/venv.html)
+- [pip Documentation](https://pip.pypa.io/en/stable/)
+- [Groq API Documentation](https://groq.com/docs)

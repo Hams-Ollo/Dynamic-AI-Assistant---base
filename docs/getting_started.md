@@ -1,33 +1,37 @@
-# Getting Started
+# Getting Started Guide
 
-## Quick Start Guide
-
-This guide will help you get up and running with the Program_and_Chill project quickly.
+This guide will help you get up and running with the Multi-Agent Chatbot Template quickly.
 
 ## Prerequisites
 
 Before you begin, ensure you have:
 
-- Python 3.8 or higher
-- Git
-- A code editor (VSCode recommended)
-- Basic knowledge of Python and AI concepts
+- Python 3.8 or higher installed
+- pip (Python package manager)
+- Git installed
+- A Groq API key ([Get one here](https://groq.com))
+- Basic understanding of Python and async programming
 
-## Installation
+## Quick Start
 
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/YOUR_USERNAME/Program_and_Chill.git
-   cd Program_and_Chill
+   git clone https://github.com/yourusername/multi-agent-chatbot-template.git
+   cd multi-agent-chatbot-template
    ```
 
 2. **Set Up Virtual Environment**
 
    ```bash
+   # Create virtual environment
    python -m venv venv
-   source venv/bin/activate  # Unix/macOS
-   .\venv\Scripts\activate   # Windows
+
+   # Activate it on Windows
+   .\venv\Scripts\activate
+
+   # Or on Unix/MacOS
+   source venv/bin/activate
    ```
 
 3. **Install Dependencies**
@@ -39,163 +43,121 @@ Before you begin, ensure you have:
 4. **Configure Environment**
 
    ```bash
+   # Copy example environment file
    cp .env.example .env
-   # Edit .env with your API keys and configurations
+
+   # Edit .env with your API keys
+   # Required:
+   GROQ_API_KEY=your-groq-api-key
+   
+   # Optional:
+   LOG_LEVEL=INFO
+   MEMORY_TYPE=buffer
+   MEMORY_PATH=./data/memory
    ```
 
-## First Steps
+5. **Run the Application**
 
-### 1. Run the Application
+   ```bash
+   python main.py
+   ```
 
-```bash
-streamlit run frontend/streamlit.py
-```
-
-### 2. Create Your First Agent
-
-```python
-from app.agents import BaseAgent
-
-class MyFirstAgent(BaseAgent):
-    def __init__(self, config):
-        super().__init__(config)
-        self.capabilities = ["chat"]
-
-    async def process_message(self, message: str) -> str:
-        return f"Echo: {message}"
-```
-
-### 3. Test the Agent
-
-```python
-agent = MyFirstAgent({"name": "echo_agent"})
-response = await agent.process_message("Hello, World!")
-print(response)  # Output: Echo: Hello, World!
-```
-
-## Project Structure
+## Project Structure Overview
 
 ```curl
-├── requirements.txt
-├── Makefile
-├── app/                 # Core application code
-├── frontend/           # Streamlit UI
-├── tests/             # Test suite
-└── docs/              # Documentation
+multi-agent-chatbot/
+├── app/                    # Main application code
+│   ├── agents/            # Agent implementations
+│   │   ├── chat_agent.py # Main chat agent
+│   │   └── document_processor.py
+│   ├── core/             # Core functionality
+│   └── utils/            # Utilities
+├── tests/                # Test suite
+└── main.py              # Entry point
 ```
 
-## Key Features
+## Basic Usage
 
-1. **Multi-Agent System**
-   - Create custom agents
-   - Chain agents together
-   - Manage agent communication
+### 1. Simple Chat Interaction
 
-2. **Streamlit Frontend**
-   - Interactive UI
-   - Real-time updates
-   - Visualization tools
+```python
+from app.agents.chat_agent import ChatAgent
 
-3. **Development Tools**
-   - Code formatting
-   - Testing framework
-   - Documentation
+# Initialize the chat agent
+agent = ChatAgent(api_key="your-groq-api-key")
 
-## Common Tasks
-
-### Running Tests
-
-```bash
-pytest tests/
+# Process a message
+response = agent.process_message("Hello! How can you help me?")
+print(response["response"])
 ```
 
-### Formatting Code
+### 2. Document Processing
 
-```bash
-black .
-isort .
+```python
+from app.agents.document_processor import DocumentProcessor
+
+# Initialize the document processor
+processor = DocumentProcessor()
+
+# Process a text document
+docs = processor.process_text("Your document text here")
 ```
 
-### Checking Types
+### 3. Memory Management
 
-```bash
-mypy app/
+```python
+from app.utils.memory import MemoryManager
+
+# Initialize memory manager
+memory = MemoryManager({
+    'type': 'buffer',
+    'path': './data/memory'
+})
+
+# Store and retrieve context
+memory.add_context("Hello!", "Hi there!")
+context = memory.get_relevant_context("Hello")
 ```
 
 ## Next Steps
 
-1. Review the [Development Guidelines](./development_guidelines.md)
-2. Explore the [API Documentation](./api.md)
-3. Learn about [Agent Architecture](./agents.md)
-4. Join our community:
-   - GitHub Discussions
-   - Discord Channel
-   - Stack Overflow Tag
+1. Check out the [Configuration Guide](guides/configuration.md) for advanced settings
+2. Learn how to [create custom agents](guides/agents.md)
+3. Review the [development guidelines](development_guidelines.md)
+4. Run the test suite: `pytest tests/`
 
-## Troubleshooting
+## Common Issues
 
-### Common Issues
+### 1. API Key Issues
 
-1. **Port Already in Use**
+```curl
+Error: Invalid API key provided
+Solution: Ensure GROQ_API_KEY is properly set in your .env file
+```
 
-   ```bash
-   netstat -ano | findstr :8501
-   taskkill /PID <PID> /F
-   ```
+### 2. Memory Errors
 
-2. **Package Conflicts**
+```curl
+Error: Memory path not found
+Solution: Create the data/memory directory manually if it doesn't exist
+```
 
-   ```bash
-   pip install -r requirements.txt --upgrade
-   ```
+### 3. Import Errors
 
-3. **Environment Issues**
+```curl
+Error: Module not found
+Solution: Ensure you're in the project root and virtual environment is activated
+```
 
-   ```bash
-   deactivate
-   rm -rf venv
-   python -m venv venv
-   ```
+## Getting Help
 
-## Best Practices
+If you encounter any issues:
 
-1. **Code Organization**
-   - Follow project structure
-   - Use meaningful names
-   - Keep files focused
+1. Check the [documentation](index.md)
+2. Look for similar issues on GitHub
+3. Open a new issue if needed
 
-2. **Development Flow**
-   - Write tests first
-   - Document your code
-   - Use type hints
+## Next Section
 
-3. **Git Workflow**
-   - Create feature branches
-   - Write clear commit messages
-   - Keep PRs focused
-
-## Resources
-
-- [Python Documentation](https://docs.python.org/)
-- [Streamlit Documentation](https://docs.streamlit.io/)
-- [Project Wiki](https://github.com/YOUR_USERNAME/Program_and_Chill/wiki)
-
-## Support
-
-Need help? Try these resources:
-
-- Check the documentation
-- Open an issue
-- Join our community channels
-
-## Contributing
-
-Want to contribute? Great!
-
-1. Check out [CONTRIBUTING.md](./contributing.md)
-2. Pick an issue to work on
-3. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License. See [LICENSE](../LICENSE) for details.
+- [Environment Setup](environment_setup.md) - Detailed environment configuration
+- [Agent Development](guides/agents.md) - Learn how to create custom agents

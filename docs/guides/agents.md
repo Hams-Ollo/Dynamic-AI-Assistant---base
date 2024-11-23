@@ -1,247 +1,188 @@
 # Agent Development Guide
 
+This guide explains how to create and customize agents using the Multi-Agent Chatbot Template.
+
 ## Overview
 
-This guide covers the development of custom agents using the Multi-Agent Project Template. Learn how to create, configure, and deploy agents that can process data, communicate with other agents, and maintain state.
+The template provides a flexible architecture for creating chatbot agents with:
 
-## Table of Contents
+- Document processing capabilities
+- Memory management
+- LLM integration
+- Error handling
+- Logging
 
-1. [Agent Architecture](#agent-architecture)
-2. [Creating Custom Agents](#creating-custom-agents)
-3. [Agent Communication](#agent-communication)
-4. [Memory Management](#memory-management)
-5. [State Management](#state-management)
-6. [Best Practices](#best-practices)
+## Base Agent Structure
 
-## Agent Architecture
-
-### Core Concepts
-
-- **Agent**: An autonomous entity that can process input and communicate with other agents
-- **Memory**: Storage system for agent data and state
-- **Configuration**: Settings that control agent behavior
-- **Communication**: Protocol for inter-agent messaging
-
-### Agent Lifecycle
-
-1. Initialization
-2. Configuration loading
-3. Memory setup
-4. Processing loop
-5. State management
-6. Cleanup
-
-## Creating Custom Agents
-
-### Basic Agent Template
+The base agent provides core functionality that all agents inherit:
 
 ```python
-from typing import Any, Dict
-from src.agents.base.base_agent import BaseAgent
+from typing import Dict, Any, Optional
+from app.utils.memory import MemoryManager
 
-class MyCustomAgent(BaseAgent):
-    def _initialize(self) -> None:
-        """Initialize agent-specific components."""
-        # Set up any required resources
-        self.llm = self._setup_llm()
-        self.memory = self._setup_memory()
-        self.tools = self._setup_tools()
-
-    async def process(self, input_data: Any) -> Any:
-        """Process input data and return results."""
-        try:
-            # 1. Preprocess input
-            processed_input = self._preprocess(input_data)
-
-            # 2. Generate response
-            response = await self._generate_response(processed_input)
-
-            # 3. Postprocess response
-            final_response = self._postprocess(response)
-
-            # 4. Update memory
-            self._update_memory(input_data, final_response)
-
-            return final_response
-
-        except Exception as e:
-            self._handle_error(e)
-            raise
-
-    async def handle_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle incoming messages from other agents."""
-        message_type = message.get("type")
-        content = message.get("content")
-
-        if message_type == "query":
-            return await self._handle_query(content)
-        elif message_type == "update":
-            return await self._handle_update(content)
-        else:
-            raise ValueError(f"Unknown message type: {message_type}")
-
-    def save_state(self) -> Dict[str, Any]:
-        """Save agent state for persistence."""
-        return {
-            "memory": self.memory.export(),
-            "config": self.config,
-            "metadata": self._get_metadata()
-        }
-
-    def load_state(self, state: Dict[str, Any]) -> None:
-        """Load a previously saved state."""
-        self.memory.import_data(state.get("memory", {}))
-        self.config.update(state.get("config", {}))
-        self._set_metadata(state.get("metadata", {}))
-
-    # Helper methods
-    def _preprocess(self, input_data: Any) -> Any:
-        """Preprocess input data."""
-        pass
-
-    async def _generate_response(self, processed_input: Any) -> Any:
-        """Generate response using LLM or other processing."""
-        pass
-
-    def _postprocess(self, response: Any) -> Any:
-        """Postprocess the generated response."""
-        pass
-
-    def _update_memory(self, input_data: Any, response: Any) -> None:
-        """Update agent's memory with interaction data."""
-        pass
-
-    def _handle_error(self, error: Exception) -> None:
-        """Handle and log errors."""
-        pass
-```
-
-### Specialized Agent Types
-
-#### Conversational Agent
-
-```python
-class ConversationalAgent(BaseAgent):
-    async def process(self, input_data: str) -> str:
-        # Process conversation and generate response
-        context = self.memory.get_recent_context()
-        response = await self.llm.generate_response(input_data, context)
-        self.memory.add_interaction(input_data, response)
-        return response
-```
-
-#### Task Agent
-
-```python
-class TaskAgent(BaseAgent):
-    async def process(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        # Process task and return results
-        task_type = task.get("type")
-        task_data = task.get("data")
+class BaseAgent:
+    def __init__(self, api_key: str):
+        """Initialize base agent.
         
-        result = await self.execute_task(task_type, task_data)
-        self.memory.add_task_result(task, result)
-        return result
-```
-
-## Agent Communication
-
-### Message Protocol
-
-```python
-# Message format
-message = {
-    "type": "message_type",
-    "sender": "agent_id",
-    "receiver": "target_agent_id",
-    "content": {
-        "data": "message_data",
-        "metadata": {}
-    },
-    "timestamp": "iso_timestamp"
-}
-
-# Handling messages
-async def handle_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
-    message_type = message["type"]
+        Args:
+            api_key: API key for LLM service
+        """
+        self.api_key = api_key
+        self.memory = MemoryManager({
+            'type': 'buffer',
+            'path': './data/memory'
+        })
     
-    if message_type == "request":
-        return await self._handle_request(message)
-    elif message_type == "response":
-        return await self._handle_response(message)
-    elif message_type == "notification":
-        return await self._handle_notification(message)
+    def process_message(self, message: str) -> Dict[str, Any]:
+        """Process a user message.
+        
+        Args:
+            message: User's input message
+            
+        Returns:
+            Dict containing response and any additional data
+        """
+        raise NotImplementedError
 ```
 
-## Memory Management
+## Creating a Custom Agent
 
-### Using Agent Memory
+### 1. Basic Chat Agent
 
 ```python
-# Store data
-self.memory.add("conversation_1", {
-    "user_input": "Hello",
-    "response": "Hi there!",
-    "timestamp": "2024-01-20T10:30:00Z"
-})
+from app.agents.base.base_agent import BaseAgent
+from app.agents.document_processor import DocumentProcessor
 
-# Retrieve data
-conversation = self.memory.get("conversation_1")
-
-# Search memory
-results = self.memory.search("greeting")
-
-# Clear specific data
-self.memory.remove("conversation_1")
-
-# Export memory
-memory_data = self.memory.export()
+class CustomChatAgent(BaseAgent):
+    def __init__(self, api_key: str):
+        super().__init__(api_key)
+        self.doc_processor = DocumentProcessor()
+        
+    def process_message(self, message: str) -> Dict[str, Any]:
+        try:
+            # Get relevant context
+            context = self.memory.get_relevant_context(message)
+            
+            # Process response
+            response = "Your custom response logic here"
+            
+            return {
+                "response": response,
+                "source_documents": []
+            }
+        except Exception as e:
+            logging.error(f"Error processing message: {e}")
+            return {
+                "response": "Error processing your message",
+                "error": str(e)
+            }
 ```
 
-### Memory Types
-
-1. **Simple Memory**
-   - Key-value storage
-   - Basic search
-   - Limited capacity
-
-2. **Vector Memory**
-   - Semantic search
-   - Embedding-based retrieval
-   - Scalable storage
-
-3. **Hierarchical Memory**
-   - Structured storage
-   - Complex relationships
-   - Advanced querying
-
-## State Management
-
-### Saving State
+### 2. Document-Aware Agent
 
 ```python
-def save_state(self) -> Dict[str, Any]:
-    return {
-        "memory": self.memory.export(),
-        "config": self.config,
-        "conversation_history": self.conversation_history,
-        "active_tasks": self.active_tasks,
-        "metadata": {
-            "last_update": datetime.now().isoformat(),
-            "version": self.version
-        }
-    }
+class DocumentAgent(BaseAgent):
+    def __init__(self, api_key: str):
+        super().__init__(api_key)
+        self.doc_processor = DocumentProcessor()
+        
+    def add_document(self, text: str) -> bool:
+        """Add a document to the agent's knowledge."""
+        try:
+            docs = self.doc_processor.process_text(text)
+            self.memory.add_documents(docs)
+            return True
+        except Exception as e:
+            logging.error(f"Error adding document: {e}")
+            return False
+            
+    def process_message(self, message: str) -> Dict[str, Any]:
+        try:
+            # Get relevant documents
+            docs = self.memory.get_relevant_documents(message)
+            
+            # Build context from documents
+            context = "\n".join(doc.page_content for doc in docs)
+            
+            # Process with context
+            response = f"Processed message with context: {len(docs)} documents"
+            
+            return {
+                "response": response,
+                "source_documents": docs
+            }
+        except Exception as e:
+            logging.error(f"Error in document agent: {e}")
+            return {
+                "response": "Error processing with documents",
+                "error": str(e)
+            }
 ```
 
-### Loading State
+## Advanced Features
+
+### 1. Memory Management
 
 ```python
-def load_state(self, state: Dict[str, Any]) -> None:
-    self.memory.import_data(state.get("memory", {}))
-    self.config.update(state.get("config", {}))
-    self.conversation_history = state.get("conversation_history", [])
-    self.active_tasks = state.get("active_tasks", {})
-    self._process_metadata(state.get("metadata", {}))
+class MemoryAwareAgent(BaseAgent):
+    def __init__(self, api_key: str):
+        super().__init__(api_key)
+        self.memory = MemoryManager({
+            'type': 'vector',
+            'path': './data/memory',
+            'cleanup_interval': 3600
+        })
+        
+    def cleanup_old_conversations(self):
+        """Remove old conversations."""
+        self.memory.cleanup()
+        
+    def get_conversation_history(self) -> List[Dict]:
+        """Get recent conversation history."""
+        return self.memory.get_recent_messages(5)
+```
+
+### 2. Custom LLM Integration
+
+```python
+from app.core.llm import CustomLLMProvider
+
+class CustomLLMAgent(BaseAgent):
+    def __init__(self, api_key: str):
+        super().__init__(api_key)
+        self.llm = CustomLLMProvider(api_key)
+        
+    async def generate_response(self, prompt: str) -> str:
+        """Generate response using custom LLM."""
+        try:
+            response = await self.llm.generate(prompt)
+            return response
+        except Exception as e:
+            logging.error(f"LLM error: {e}")
+            raise
+```
+
+### 3. Streaming Responses
+
+```python
+class StreamingAgent(BaseAgent):
+    async def process_message_stream(self, message: str):
+        """Process message with streaming response."""
+        try:
+            async for token in self.llm.generate_stream(message):
+                yield {
+                    "token": token,
+                    "finished": False
+                }
+            yield {
+                "token": "",
+                "finished": True
+            }
+        except Exception as e:
+            yield {
+                "error": str(e),
+                "finished": True
+            }
 ```
 
 ## Best Practices
@@ -249,17 +190,32 @@ def load_state(self, state: Dict[str, Any]) -> None:
 ### 1. Error Handling
 
 ```python
-try:
-    result = await self.process(input_data)
-except AgentProcessingError as e:
-    logger.error(f"Processing error: {e}")
-    self._handle_error(e)
-except AgentCommunicationError as e:
-    logger.error(f"Communication error: {e}")
-    self._handle_communication_error(e)
-except Exception as e:
-    logger.exception("Unexpected error")
-    self._handle_unexpected_error(e)
+class RobustAgent(BaseAgent):
+    def process_message(self, message: str) -> Dict[str, Any]:
+        try:
+            # Input validation
+            if not message.strip():
+                return {"error": "Empty message"}
+                
+            # Rate limiting
+            if not self._check_rate_limit():
+                return {"error": "Rate limit exceeded"}
+                
+            # Process message
+            response = self._generate_response(message)
+            
+            # Validate response
+            if not self._validate_response(response):
+                return {"error": "Invalid response"}
+                
+            return {"response": response}
+            
+        except Exception as e:
+            logging.error(f"Agent error: {e}")
+            return {
+                "error": "Internal error",
+                "details": str(e)
+            }
 ```
 
 ### 2. Logging
@@ -267,88 +223,104 @@ except Exception as e:
 ```python
 import logging
 
-logger = logging.getLogger(__name__)
-
-class MyAgent(BaseAgent):
-    def process(self, input_data):
-        logger.info(f"Processing input: {input_data}")
+class LoggingAgent(BaseAgent):
+    def __init__(self, api_key: str):
+        super().__init__(api_key)
+        self.logger = logging.getLogger(__name__)
+        
+    def process_message(self, message: str) -> Dict[str, Any]:
+        self.logger.info(f"Processing message: {message[:50]}...")
         try:
-            result = self._process_input(input_data)
-            logger.debug(f"Process result: {result}")
-            return result
+            response = self._generate_response(message)
+            self.logger.info("Successfully generated response")
+            return {"response": response}
         except Exception as e:
-            logger.error(f"Error processing input: {e}")
-            raise
+            self.logger.error(f"Error processing message: {e}")
+            return {"error": str(e)}
 ```
 
 ### 3. Testing
 
 ```python
+# test_custom_agent.py
 import pytest
-from unittest.mock import Mock, patch
+from app.agents.custom_agent import CustomAgent
 
-@pytest.fixture
-def test_agent():
-    config = {"memory_type": "simple"}
-    return MyAgent("test_agent", config)
-
-def test_agent_processing():
-    agent = test_agent()
-    result = agent.process("test input")
-    assert result is not None
+def test_custom_agent_initialization():
+    agent = CustomAgent(api_key="test_key")
+    assert agent.memory is not None
+    assert agent.doc_processor is not None
 
 @pytest.mark.asyncio
-async def test_agent_communication():
-    agent = test_agent()
-    message = {"type": "test", "content": "hello"}
-    response = await agent.handle_message(message)
-    assert response["status"] == "success"
+async def test_process_message():
+    agent = CustomAgent(api_key="test_key")
+    response = await agent.process_message("Test message")
+    assert "response" in response
+    assert isinstance(response["response"], str)
 ```
 
-### 4. Performance Optimization
+## Configuration
 
-1. Use async/await for I/O operations
-2. Implement caching for frequent operations
-3. Batch process when possible
-4. Monitor memory usage
-5. Profile performance bottlenecks
+### 1. Environment Variables
 
-### 5. Security
+```env
+# .env
+AGENT_MODEL=llama3-groq-70b-8192-tool-use-preview
+AGENT_TEMPERATURE=0.7
+AGENT_MAX_TOKENS=4096
+AGENT_MEMORY_TYPE=vector
+```
 
-1. Validate all input data
-2. Sanitize output
-3. Implement rate limiting
-4. Use secure communication
-5. Handle sensitive data properly
+### 2. Agent Config
 
-## Development Workflow
+```python
+class ConfigurableAgent(BaseAgent):
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config["api_key"])
+        self.model = config.get("model", "default_model")
+        self.temperature = config.get("temperature", 0.7)
+        self.max_tokens = config.get("max_tokens", 4096)
+```
 
-1. **Planning**
-   - Define agent purpose
-   - Design interface
-   - Plan memory requirements
-   - Identify dependencies
+## Usage Examples
 
-2. **Implementation**
-   - Create agent class
-   - Implement required methods
-   - Add error handling
-   - Set up logging
+### 1. Basic Usage
 
-3. **Testing**
-   - Write unit tests
-   - Test edge cases
-   - Verify memory management
-   - Test communication
+```python
+from app.agents import CustomAgent
 
-4. **Deployment**
-   - Configure production settings
-   - Set up monitoring
-   - Deploy agent
-   - Monitor performance
+agent = CustomAgent(api_key="your-api-key")
+response = agent.process_message("Hello!")
+print(response["response"])
+```
 
-5. **Maintenance**
-   - Monitor logs
-   - Update dependencies
-   - Optimize performance
-   - Add new features
+### 2. With Document Processing
+
+```python
+from app.agents import DocumentAgent
+
+agent = DocumentAgent(api_key="your-api-key")
+agent.add_document("Important information here...")
+response = agent.process_message("What's in the document?")
+print(response["response"])
+```
+
+### 3. Streaming Response
+
+```python
+async for chunk in agent.process_message_stream("Generate a long response"):
+    if chunk["finished"]:
+        break
+    print(chunk["token"], end="", flush=True)
+```
+
+## Next Steps
+
+1. Review the [Configuration Guide](configuration.md)
+2. Check the [Memory Management Guide](memory.md)
+3. Explore [API Documentation](../api/README.md)
+
+## Resources
+
+- [LangChain Documentation](https://python.langchain.com/docs/)
+- [Groq API Reference](https://groq.com/docs/)

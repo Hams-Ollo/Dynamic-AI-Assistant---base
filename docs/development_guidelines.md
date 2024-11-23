@@ -1,248 +1,265 @@
 # Development Guidelines
 
-## Code Organization
+This guide outlines the best practices and standards for developing with the Multi-Agent Chatbot Template.
 
-### Project Structure
+## Code Style and Standards
+
+### Python Style Guide
+
+1. **Follow PEP 8**
+   - Use 4 spaces for indentation
+   - Maximum line length of 88 characters (Black default)
+   - Use meaningful variable and function names
+   - Use docstrings for classes and functions
+
+2. **Type Hints**
+
+   ```python
+   from typing import Dict, List, Optional
+
+   def process_message(
+       message: str,
+       context: Optional[Dict[str, str]] = None
+   ) -> Dict[str, Any]:
+       """Process a user message with optional context.
+       
+       Args:
+           message: The user's input message
+           context: Optional context dictionary
+           
+       Returns:
+           Dict containing response and any source documents
+       """
+       pass
+   ```
+
+3. **Error Handling**
+
+   ```python
+   try:
+       response = await self.llm.generate_response(messages)
+   except Exception as e:
+       logging.error(f"Error generating response: {str(e)}")
+       return {
+           "response": "I encountered an error processing your message.",
+           "error": str(e)
+       }
+   ```
+
+## Project Structure
+
+### Code Organization
 
 ```curl
-project_root/
-├── app/                        # Core application code
-│   ├── agents/                # AI agent definitions and logic
-│   │   ├── __init__.py
-│   │   └── chat_agent.py     # Example: Chat implementation
-│   ├── config/               # Configuration management
-│   ├── models/               # Data models and schemas
-│   ├── services/            # Business logic and services
-│   └── utils/               # Utility functions and helpers
-├── frontend/                 # UI components
-│   └── streamlit.py         # Example: Streamlit interface
-├── tests/                    # Test suite
-│   ├── unit/               # Unit tests
-│   └── integration/        # Integration tests
-├── docs/                     # Documentation
-└── scripts/                  # Utility scripts
+app/
+├── agents/              # Agent implementations
+│   ├── base/           # Base classes
+│   │   └── base_agent.py
+│   ├── specialized/    # Custom agents
+│   ├── chat_agent.py   # Main chat agent
+│   └── document_processor.py
+├── core/               # Core functionality
+│   ├── config.py      # Configuration
+│   └── logging.py     # Logging setup
+└── utils/             # Utility functions
+    └── memory.py      # Memory management
 ```
 
-## Development Workflow
+### Module Responsibilities
 
-### 1. Environment Setup
+1. **agents/**
+   - Define agent interfaces
+   - Implement agent logic
+   - Handle message processing
 
-```bash
-# Create virtual environment
-python -m venv venv
+2. **core/**
+   - Manage configuration
+   - Set up logging
+   - Handle core functionality
 
-# Activate environment
-# Windows
-.\venv\Scripts\activate
-# Unix/MacOS
-source venv/bin/activate
+3. **utils/**
+   - Provide helper functions
+   - Implement memory management
+   - Handle common operations
 
-# Install dependencies
-pip install -r requirements.txt
-```
+## Best Practices
 
-### 2. Code Quality
+### 1. Code Quality
+
+- Use Black for code formatting
+- Run isort for import sorting
+- Enable type checking with mypy
+- Maintain test coverage
 
 ```bash
 # Format code
 black .
 isort .
 
-# Run linting
-flake8
-pylint app/
-
-# Type checking
+# Check types
 mypy app/
 
 # Run tests
-pytest
 pytest --cov=app tests/
 ```
 
-### 3. Git Workflow
+### 2. Documentation
 
-```bash
-# Create feature branch
-git checkout -b feature/name
+- Write clear docstrings
+- Keep README up to date
+- Document configuration options
+- Include usage examples
 
-# Make changes
-git add .
-git commit -m "feat: description"
-
-# Push changes
-git push origin feature/name
+```python
+class MemoryManager:
+    """Manages conversation and document memory.
+    
+    This class provides a unified interface for storing and retrieving
+    conversation history and document context.
+    
+    Attributes:
+        memory_type: Type of memory backend to use
+        path: Path to store persistent memory
+        
+    Example:
+        >>> memory = MemoryManager({'type': 'buffer', 'path': './data/memory'})
+        >>> memory.add_context("Hello!", "Hi there!")
+    """
 ```
 
-## Best Practices
+### 3. Testing
 
-### Python Coding Standards
+- Write unit tests for new features
+- Use pytest fixtures
+- Mock external dependencies
+- Test error conditions
 
-1. **Follow PEP 8**
-   - Use 4 spaces for indentation
-   - Maximum line length of 88 characters (Black default)
-   - Clear variable and function names
-
-2. **Type Hints**
-
-   ```python
-   def process_data(input_data: List[str]) -> Dict[str, Any]:
-       """Process input data and return results."""
-       results: Dict[str, Any] = {}
-       return results
-   ```
-
-3. **Docstrings**
-
-   ```python
-   def complex_function(param1: str, param2: int) -> bool:
-       """
-       Brief description of function.
-
-       Args:
-           param1 (str): Description of param1
-           param2 (int): Description of param2
-
-       Returns:
-           bool: Description of return value
-
-       Raises:
-           ValueError: When param1 is empty
-       """
-       pass
-   ```
-
-4. **File Headers**
-
-   ```python
-   #-------------------------------------------------------------------------------------#
-   # File: filename.py
-   # Description: Brief description of the file's purpose
-   # Author: @username
-   #
-   # INITIAL SETUP:
-   # 1. Create virtual environment:    python -m venv venv
-   # 2. Activate virtual environment:
-   #    - Windows:                    .\venv\Scripts\activate
-   #    - Unix/MacOS:                 source venv/bin/activate
-   # 3. Install requirements:         pip install -r requirements.txt
-   # 4. Create .env file:            cp .env.example .env
-   # 5. Update dependencies:          pip freeze > requirements.txt
-   #
-   #-------------------------------------------------------------------------------------#
-   ```
-
-### Error Handling
-
-1. **Use Specific Exceptions**
-
-   ```python
-   try:
-       process_data()
-   except ValueError as e:
-       logging.error(f"Invalid data format: {e}")
-   except IOError as e:
-       logging.error(f"IO operation failed: {e}")
-   ```
-
-2. **Logging**
-
-   ```python
-   import logging
-
-   logging.basicConfig(
-       level=logging.INFO,
-       format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-   )
-   ```
-
-### Testing
-
-1. **Unit Tests**
-
-   ```python
-   def test_process_data():
-       input_data = ["test"]
-       result = process_data(input_data)
-       assert isinstance(result, dict)
-       assert "status" in result
-   ```
-
-2. **Integration Tests**
-
-   ```python
-   @pytest.mark.integration
-   def test_api_endpoint():
-       response = client.get("/api/data")
-       assert response.status_code == 200
-   ```
-
-### Documentation
-
-1. **Keep README Updated**
-   - Project overview
-   - Setup instructions
-   - Usage examples
-   - Contributing guidelines
-
-2. **API Documentation**
-   - Endpoint descriptions
-   - Request/response formats
-   - Authentication details
-   - Error codes
-
-3. **Code Comments**
-   - Complex logic explanation
-   - Warning about edge cases
-   - TODO items for future work
-
-## Common Commands
-
-```bash
-# Development
-make run          # Run application
-make test         # Run tests
-make lint         # Check code style
-make format       # Format code
-make clean        # Clean cache files
-
-# Git
-git fetch         # Update branches
-git rebase main   # Rebase on main
-git push -f       # Force push after rebase
+```python
+def test_chat_agent_initialization(mocker):
+    """Test ChatAgent initialization."""
+    mock_llm = mocker.Mock()
+    agent = ChatAgent(api_key="test_key")
+    
+    assert agent.llm is not None
+    assert isinstance(agent.memory, MemoryManager)
 ```
 
-## Troubleshooting
+### 4. Error Handling
 
-### Common Issues
+- Use specific exception types
+- Log errors appropriately
+- Provide user-friendly messages
+- Include error context
 
-1. **Port Conflicts**
+```python
+class DocumentProcessingError(Exception):
+    """Raised when document processing fails."""
+    pass
 
-   ```bash
-   # Windows
-   netstat -ano | findstr :<PORT>
-   taskkill /PID <PID> /F
-   ```
+try:
+    docs = processor.process_text(text)
+except DocumentProcessingError as e:
+    logging.error(f"Failed to process document: {e}")
+    return {"error": "Could not process document"}
+```
 
-2. **Environment Issues**
+## Git Workflow
 
-   ```bash
-   pip install -r requirements.txt --upgrade
-   ```
+### 1. Branching Strategy
 
-3. **Git Conflicts**
+- `main`: Production-ready code
+- `develop`: Integration branch
+- `feature/*`: New features
+- `bugfix/*`: Bug fixes
+- `release/*`: Release preparation
 
-   ```bash
-   git stash
-   git pull origin main
-   git stash pop
-   ```
+### 2. Commit Messages
 
-## Additional Resources
+Follow conventional commits:
 
-- [Python Style Guide](https://peps.python.org/pep-0008/)
-- [Type Hints Guide](https://mypy.readthedocs.io/)
-- [Git Best Practices](https://git-scm.com/book/en/v2)
+```curl
+feat: Add document processing capability
+fix: Resolve memory leak in chat agent
+docs: Update installation instructions
+test: Add tests for memory manager
+refactor: Improve error handling
+```
 
----
-*These guidelines serve as both development standards for the current project and a template for future projects.*
+### 3. Pull Requests
+
+- Create descriptive titles
+- Include context and changes
+- Link related issues
+- Add tests for new features
+
+## Performance Considerations
+
+### 1. Memory Management
+
+- Clean up old conversations
+- Limit context window size
+- Use appropriate memory backend
+- Monitor memory usage
+
+### 2. API Usage
+
+- Implement rate limiting
+- Cache responses when possible
+- Handle API errors gracefully
+- Monitor API costs
+
+### 3. Async Operations
+
+- Use async/await properly
+- Don't block the event loop
+- Handle timeouts
+- Implement proper error handling
+
+## Security Best Practices
+
+1. **API Keys**
+   - Use environment variables
+   - Never commit secrets
+   - Rotate keys regularly
+   - Implement key validation
+
+2. **Input Validation**
+   - Sanitize user input
+   - Validate message length
+   - Check file types
+   - Implement rate limiting
+
+3. **Error Messages**
+   - Don't expose internals
+   - Log detailed errors
+   - Return safe messages
+   - Include error codes
+
+## Deployment
+
+1. **Environment Setup**
+   - Use production settings
+   - Configure logging
+   - Set up monitoring
+   - Enable security features
+
+2. **Performance Monitoring**
+   - Track response times
+   - Monitor memory usage
+   - Log error rates
+   - Set up alerts
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
+
+## Resources
+
+- [Python Style Guide](https://www.python.org/dev/peps/pep-0008/)
+- [Type Hints](https://docs.python.org/3/library/typing.html)
+- [pytest Documentation](https://docs.pytest.org/)
+- [Black Documentation](https://black.readthedocs.io/)
