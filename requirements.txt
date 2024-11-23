@@ -10,6 +10,7 @@ langchain>=0.0.350
 transformers>=4.35.0
 torch>=2.1.0
 sentence-transformers>=2.2.2
+groq>=0.4.2  # Added for Groq LLM support
 
 # Memory and Storage
 chromadb>=0.4.22

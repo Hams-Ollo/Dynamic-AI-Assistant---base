@@ -1,51 +1,33 @@
-# 🤖 Multi-Agent Project Template
+# 🤖 Multi-Agent Chatbot Template
 
-A powerful, flexible framework for building production-ready multi-agent AI systems. This template provides a robust foundation for developing sophisticated AI applications, including chatbots, automation systems, and distributed AI solutions.
+A production-ready template for building AI chatbots and conversational agents using modern best practices. This template provides everything you need to quickly start developing sophisticated chatbots with features like document processing, memory management, and flexible LLM integration.
 
-## ✨ Key Features
+## 🎯 Why Use This Template?
 
-- 🎯 **Modular Agent Architecture**
-  - Plug-and-play agent system
-  - Flexible agent communication
-  - Built-in state management
-  - Extensible agent behaviors
-
-- 🧠 **Advanced Memory Systems**
-  - Multiple memory backends
-  - Vector storage support
-  - Persistent memory options
-  - Configurable retention policies
-
-- ⚡ **Modern Infrastructure**
-  - Async/await support
-  - REST API endpoints
-  - WebSocket capabilities
-  - Scalable architecture
-
-- 🔒 **Enterprise Security**
-  - API key authentication
-  - Rate limiting
-  - CORS protection
-  - Secure configuration
+- **Quick Start**: Get a production-ready chatbot running in minutes
+- **Best Practices**: Built-in logging, configuration, and security features
+- **Flexible Architecture**: Easy to extend and customize for your specific needs
+- **Modern Stack**: Async support, type hints, and modern Python patterns
+- **Production Ready**: Includes error handling, testing, and deployment configurations
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Python 3.8+
-- pip (Python package manager)
+- A Groq API key (get one at [groq.com](https://groq.com))
 - Git
 
-### Installation
+### Setup
 
-1. Clone the repository:
+1. **Clone the template:**
 
    ```bash
-   git clone https://github.com/yourusername/multi-agent-project.git
-   cd multi-agent-project
+   git clone https://github.com/yourusername/multi-agent-chatbot-template.git
+   cd multi-agent-chatbot-template
    ```
 
-2. Create a virtual environment:
+2. **Create a virtual environment:**
 
    ```bash
    python -m venv venv
@@ -57,116 +39,127 @@ A powerful, flexible framework for building production-ready multi-agent AI syst
    source venv/bin/activate
    ```
 
-3. Install dependencies:
+3. **Install dependencies:**
 
    ```bash
    pip install -r requirements.txt
    ```
 
-4. Set up configuration:
+4. **Set up your environment:**
 
    ```bash
-   cp config/default/default_config.json config/custom/config.json
    cp .env.example .env
    ```
 
-5. Run the application:
+   Then edit `.env` with your API keys:
+
+   ```env
+   GROQ_API_KEY=your-api-key-here
+   ```
+
+5. **Run the chatbot:**
 
    ```bash
-   python src/main.py
+   python main.py
    ```
 
 ## 📁 Project Structure
 
 ```curl
-multi-agent-project/
-├── src/                      # Source code
-│   ├── agents/              # Agent definitions
-│   │   ├── base/           # Base agent classes
-│   │   └── specialized/    # Custom agents
-│   ├── core/               # Core functionality
-│   │   ├── memory/        # Memory systems
-│   │   ├── llm/           # LLM integrations
-│   │   └── utils/         # Utilities
-│   └── interfaces/         # External interfaces
-├── config/                  # Configuration
-│   ├── default/           # Default settings
-│   └── custom/            # User settings
-├── data/                   # Data storage
-├── tests/                  # Test suite
-├── docs/                   # Documentation
-└── notebooks/             # Jupyter notebooks
+multi-agent-chatbot/
+├── app/                    # Main application code
+│   ├── agents/            # Agent implementations
+│   │   ├── base/         # Base agent classes
+│   │   ├── specialized/  # Specialized agents
+│   │   ├── chat_agent.py # Main chat agent
+│   │   └── document_processor.py
+│   ├── api/              # API endpoints
+│   ├── core/             # Core functionality
+│   │   ├── config.py    # Configuration management
+│   │   └── logging.py   # Logging setup
+│   └── utils/            # Utilities
+│       └── memory.py    # Memory management
+├── tests/                 # Test suite
+├── .env                   # Environment variables
+├── .env.example          # Example environment file
+├── requirements.txt       # Project dependencies
+└── main.py               # Application entry point
 ```
 
-## 🛠️ Development Guide
+## 💡 Creating Your Own Agent
 
-### Creating a New Agent
-
-1. Create a new agent class:
+1. **Create a new agent class:**
 
    ```python
-   from src.agents.base.base_agent import BaseAgent
-
+   from app.agents.base.base_agent import BaseAgent
+   
    class MyCustomAgent(BaseAgent):
-       async def process(self, input_data):
-           # Process input and return response
-           return processed_result
-
-       async def handle_message(self, message):
-           # Handle inter-agent communication
-           return response
-   ```
-
-2. Configure the agent:
-
-   ```json
-   {
-       "agents": {
-           "my_custom_agent": {
-               "type": "MyCustomAgent",
-               "config": {
-                   "memory_type": "vector",
-                   "llm_model": "gpt-4"
-               }
+       def __init__(self, api_key: str):
+           super().__init__(api_key)
+           # Add your custom initialization
+   
+       def process_message(self, message: str) -> dict:
+           # Add your custom message processing
+           return {
+               "response": "Your processed response",
+               "source_documents": []
            }
-       }
-   }
    ```
 
-### Using Memory Systems
+2. **Use the built-in features:**
 
-```python
-# Get a memory instance
-memory = memory_manager.get_memory("agent_memory")
+   ```python
+   from app.utils.memory import MemoryManager
+   from app.agents.document_processor import DocumentProcessor
+   
+   class MyAgent:
+       def __init__(self):
+           # Initialize memory
+           self.memory = MemoryManager({
+               'type': 'buffer',
+               'path': './data/memory'
+           })
+           
+           # Initialize document processor
+           self.doc_processor = DocumentProcessor()
+           
+           # Process documents
+           docs = self.doc_processor.process_text("Your text here")
+   ```
 
-# Store data
-memory.add("conversation_1", {"user": "Hello!", "response": "Hi there!"})
+## 🔧 Configuration
 
-# Retrieve data
-data = memory.get("conversation_1")
+### Environment Variables
 
-# Search memory
-results = memory.search("hello")
+Required variables in your `.env` file:
+
+```env
+# Required
+GROQ_API_KEY=your-groq-api-key
+
+# Optional
+LOG_LEVEL=INFO
+MEMORY_TYPE=buffer
+MEMORY_PATH=./data/memory
 ```
 
-### Configuration Management
+### Memory Configuration
+
+The template supports multiple memory types:
 
 ```python
-from src.core.utils.config_manager import ConfigManager
+# Buffer Memory (Default)
+memory_config = {
+    'type': 'buffer',
+    'path': './data/memory'
+}
 
-# Initialize config
-config = ConfigManager()
-
-# Get configuration values
-api_key = config.get("security.api_key")
-memory_config = config.get("memory.default_store")
-
-# Update custom configuration
-config.save_custom_config({
-    "agents": {
-        "my_agent": {"enabled": True}
-    }
-})
+# Vector Memory
+memory_config = {
+    'type': 'vector',
+    'path': './data/memory',
+    'embedding_model': 'openai'
+}
 ```
 
 ## 🧪 Testing
@@ -177,94 +170,45 @@ Run the test suite:
 # Run all tests
 pytest
 
-# Run specific test category
-pytest tests/unit/
-pytest tests/integration/
-
 # Run with coverage
-pytest --cov=src tests/
+pytest --cov=app tests/
 ```
 
-## 📚 Documentation
+## 📚 Best Practices
 
-- [API Reference](docs/api/README.md)
-- [Agent Development Guide](docs/guides/agents.md)
-- [Configuration Guide](docs/guides/configuration.md)
-- [Memory Systems](docs/guides/memory.md)
-- [Security Guide](docs/guides/security.md)
-- [Deployment Guide](docs/guides/deployment.md)
+1. **Error Handling**
+   - Always use try-except blocks for external API calls
+   - Log errors with appropriate levels
+   - Provide user-friendly error messages
 
-## 🔧 Configuration
+2. **Memory Management**
+   - Regularly clean up old conversations
+   - Use appropriate memory types for your use case
+   - Monitor memory usage in production
 
-### Environment Variables
-
-```env
-AGENT_API_KEY=your_api_key
-AGENT_LLM_PROVIDER=openai
-AGENT_MEMORY_TYPE=vector
-AGENT_LOG_LEVEL=INFO
-```
-
-### Custom Configuration
-
-Create `config/custom/config.json`:
-
-```json
-{
-    "agents": {
-        "custom_agent": {
-            "enabled": true,
-            "memory": {
-                "type": "vector",
-                "max_items": 10000
-            }
-        }
-    }
-}
-```
+3. **Security**
+   - Never commit API keys
+   - Use environment variables for sensitive data
+   - Implement rate limiting for production
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-### Development Guidelines
-
-- Follow PEP 8 style guide
-- Add tests for new features
-- Update documentation
-- Use type hints
-- Keep functions focused and modular
-
-## 📄 License
+## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## 🙋‍♂️ Getting Help
 
-- Built with modern AI frameworks and libraries
-- Inspired by best practices in distributed systems
-- Community contributions welcome
-
-## 🆘 Support
-
-- Open an issue for bug reports
-- Check existing issues before reporting
-- Provide detailed reproduction steps
-- Include relevant logs and configurations
-
-## 🔮 Future Plans
-
-- [ ] Additional memory backends
-- [ ] Enhanced monitoring
-- [ ] Agent marketplace
-- [ ] GUI interface
-- [ ] Container support
-- [ ] Cloud deployment templates
+- Create an issue for bug reports or feature requests
+- Check existing issues for common problems
+- Read the documentation in the `docs` folder
 
 ---
 
-Built with ❤️ by the AI community
+Built with ❤️ by [Your Name/Organization]
