@@ -18,8 +18,9 @@ from typing import List, Dict, Any, Optional
 import logging
 
 import groq
-from langchain.schema import AIMessage, HumanMessage
+from langchain.schema import AIMessage, HumanMessage, SystemMessage, BaseMessage, ChatResult, ChatGeneration
 from langchain.chat_models.base import BaseChatModel
+from langchain.callbacks.manager import CallbackManagerForLLMRun
 
 from .document_processor import DocumentProcessor
 from ..utils.memory import MemoryManager
@@ -48,16 +49,14 @@ class GroqChatModel(BaseChatModel):
     def temperature(self):
         """Get the temperature value."""
         return self._temperature
-    
-    def generate_response(self, messages: list) -> Dict[str, Any]:
-        """Generate a response using the Groq API.
-        
-        Args:
-            messages: List of conversation messages
-            
-        Returns:
-            Response from the model
-        """
+
+    @property
+    def _llm_type(self) -> str:
+        """Return identifier of llm."""
+        return "groq"
+
+    def _generate(self, messages: List[BaseMessage], stop: Optional[List[str]] = None, run_manager: Optional[CallbackManagerForLLMRun] = None, **kwargs: Any) -> ChatResult:
+        """Generate chat response."""
         try:
             # Convert messages to chat format
             chat_messages = []
@@ -66,15 +65,20 @@ class GroqChatModel(BaseChatModel):
                     chat_messages.append({"role": "user", "content": msg.content})
                 elif isinstance(msg, AIMessage):
                     chat_messages.append({"role": "assistant", "content": msg.content})
+                elif isinstance(msg, SystemMessage):
+                    chat_messages.append({"role": "system", "content": msg.content})
             
             # Call Groq API
             completion = self.client.chat.completions.create(
                 model=self.model,
                 messages=chat_messages,
-                temperature=self.temperature
+                temperature=self.temperature,
+                stop=stop,
+                **kwargs
             )
             
-            return completion
+            message = AIMessage(content=completion.choices[0].message.content)
+            return ChatResult(generations=[ChatGeneration(message=message)])
             
         except Exception as e:
             logging.error(f"Error generating response: {str(e)}")
@@ -83,13 +87,13 @@ class GroqChatModel(BaseChatModel):
 class ChatAgent:
     """Main chat agent implementation."""
     
-    def __init__(self, api_key: str, model: str = "llama3-groq-70b-8192-tool-use-preview"):
-        """Initialize the chat agent."""
+    def __init__(self, config: Dict[str, Any]):
+        """Initialize the chat agent with configuration."""
         try:
             self.llm = GroqChatModel(
-                api_key=api_key,
-                model=model,
-                temperature=0.7
+                api_key=config.get('api_key'),
+                model=config.get('model', "llama3-groq-70b-8192-tool-use-preview"),
+                temperature=config.get('temperature', 0.7)
             )
             logging.info("Successfully initialized Groq chat model")
         except Exception as e:
@@ -97,19 +101,30 @@ class ChatAgent:
             raise
             
         self.doc_processor = DocumentProcessor()
-        self.memory = MemoryManager({
-            'type': 'buffer',
-            'path': './data/memory'
-        })
+        self.memory = None  # Will be set in initialize()
         
         # Custom prompt template for the chatbot
-        self.system_prompt = """
+        self.system_prompt = config.get('system_prompt', """
         You are a helpful AI assistant with access to a knowledge base of documents.
         Use the provided context to answer questions accurately and concisely.
         If you don't know the answer, just say that you don't know.
         If the question is not related to the context, respond based on your general knowledge.
+        """)
+
+    def initialize(self, memory_manager: MemoryManager):
+        """Initialize the chat agent with memory manager.
+        
+        Args:
+            memory_manager: Memory manager instance to use for conversation history
         """
-    
+        self.memory = memory_manager
+        logging.info("Chat agent initialized with memory manager")
+
+    def cleanup(self):
+        """Cleanup resources used by the chat agent."""
+        self.memory = None
+        logging.info("Chat agent cleanup completed")
+
     def process_message(self, message: str) -> Dict[str, Any]:
         """Process a user message and return a response.
         
@@ -122,32 +137,29 @@ class ChatAgent:
         try:
             # Get relevant documents from memory
             relevant_docs = []
-            if hasattr(self.memory, 'get_relevant_context'):
+            if self.memory and hasattr(self.memory, 'get_relevant_context'):
                 context = self.memory.get_relevant_context(message)
                 if context:
                     relevant_docs = self.doc_processor.process_text(context)
             
-            # Prepare conversation history
+            # Convert messages to LangChain format
             messages = [
-                {"role": "system", "content": self.system_prompt},
+                SystemMessage(content=self.system_prompt),
             ]
             
             # Add context if available
             if relevant_docs:
                 context = "\n".join(doc.page_content for doc in relevant_docs)
-                messages.append({
-                    "role": "system",
-                    "content": f"Context:\n{context}"
-                })
+                messages.append(SystemMessage(content=f"Context:\n{context}"))
             
             # Add user message
-            messages.append({"role": "user", "content": message})
+            messages.append(HumanMessage(content=message))
             
             # Generate response
-            completion = self.llm.generate_response(messages)
+            response = self.llm._generate(messages)
             
             return {
-                "response": completion.choices[0].message.content,
+                "response": response.generations[0].message.content,
                 "source_documents": relevant_docs
             }
             

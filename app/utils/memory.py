@@ -6,8 +6,8 @@ import logging
 from pathlib import Path
 
 from langchain.memory import ConversationBufferMemory
-from langchain.vectorstores import Chroma
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
 
 class MemoryManager:
     """Manages different types of memory for chat agents."""
@@ -32,8 +32,11 @@ class MemoryManager:
     def _init_vector_memory(self):
         """Initialize vector store memory."""
         try:
-            # Initialize embeddings
-            self.embeddings = OpenAIEmbeddings()
+            # Initialize embeddings with a local model
+            self.embeddings = HuggingFaceEmbeddings(
+                model_name="all-MiniLM-L6-v2",
+                model_kwargs={'device': 'cpu'}
+            )
             
             # Initialize vector store
             self.vector_store = Chroma(
