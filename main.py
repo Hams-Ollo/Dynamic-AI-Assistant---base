@@ -41,123 +41,67 @@
 #-------------------------------------------------------------------------------------#
 
 #----------# IMPORTS #----------#
-# Standard library imports
 import os
 import sys
 import logging
-import argparse
-from typing import Optional, Dict, Any
 from pathlib import Path
+from typing import Optional, Dict, Any
 
-# Third-party imports
-import streamlit as st
-from dotenv import load_dotenv
-
-# Local application imports
-from src.core.utils.config_manager import ConfigManager
-from src.core.memory.memory_manager import MemoryManager
-from src.agents.base.base_agent import BaseAgent
+from app.core.config import load_config
+from app.core.logging import setup_logging
+from app.agents.chat_agent import ChatAgent
+from app.utils.memory import MemoryManager
 
 #----------# CONFIGURATION #----------#
-def setup_logging(log_level: str = "INFO") -> None:
-    """Configure logging settings for the application."""
-    logging.basicConfig(
-        level=getattr(logging, log_level.upper()),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler('logs/app.log')
-        ]
-    )
+def initialize_app(config_path: Optional[str] = None) -> Dict[str, Any]:
+    """Initialize the application with configuration and logging."""
+    config = load_config(config_path)
+    setup_logging(config.get('log_level', 'INFO'))
+    return config
 
-def load_configuration() -> Dict[str, Any]:
-    """Load application configuration from environment and config files."""
-    # Load environment variables
-    load_dotenv()
-    
-    # Initialize configuration manager
-    config_manager = ConfigManager(config_dir="config")
-    return config_manager.get_config()
-
-def parse_arguments() -> argparse.Namespace:
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description="Multi-Agent System")
-    parser.add_argument(
-        "--log-level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set the logging level"
-    )
-    return parser.parse_args()
-
-#----------# APPLICATION #----------#
-class MultiAgentSystem:
-    """Main application class for the multi-agent system."""
+#----------# MAIN APPLICATION #----------#
+class ChatSystem:
+    """Main application class for the chat system."""
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.memory_manager = MemoryManager(config["memory"])
-        self.agents = {}
-        
-    def initialize_agents(self) -> None:
-        """Initialize all agents defined in configuration."""
-        # TODO: Implement agent initialization
-        pass
-        
-    def start(self) -> None:
-        """Start the multi-agent system."""
-        # TODO: Implement system startup logic
-        pass
-        
-    def stop(self) -> None:
-        """Stop the multi-agent system."""
-        # TODO: Implement cleanup and shutdown logic
-        pass
+        self.memory_manager = MemoryManager(config.get('memory', {}))
+        self.agent = ChatAgent(config.get('agent', {}))
+    
+    def start(self):
+        """Start the chat system."""
+        try:
+            self.agent.initialize(self.memory_manager)
+            logging.info("Chat system started successfully")
+        except Exception as e:
+            logging.error(f"Failed to start chat system: {str(e)}")
+            sys.exit(1)
+    
+    def stop(self):
+        """Gracefully stop the chat system."""
+        try:
+            self.agent.cleanup()
+            self.memory_manager.cleanup()
+            logging.info("Chat system stopped successfully")
+        except Exception as e:
+            logging.error(f"Error during system shutdown: {str(e)}")
 
-#----------# STREAMLIT UI #----------#
-def setup_streamlit() -> None:
-    """Configure Streamlit user interface."""
-    st.set_page_config(
-        page_title="Multi-Agent System",
-        page_icon="🤖",
-        layout="wide"
-    )
+def main():
+    """Main entry point for the application."""
+    config = initialize_app()
     
-def render_ui() -> None:
-    """Render the main Streamlit user interface."""
-    st.title("Multi-Agent System")
-    # TODO: Implement UI components
-    pass
-
-#----------# MAIN #----------#
-def main() -> None:
-    """Main application entry point."""
-    # Parse command line arguments
-    args = parse_arguments()
-    
-    # Setup logging
-    setup_logging(args.log_level)
-    logger = logging.getLogger(__name__)
-    logger.info("Starting Multi-Agent System")
-    
+    system = ChatSystem(config)
     try:
-        # Load configuration
-        config = load_configuration()
-        
-        # Initialize system
-        system = MultiAgentSystem(config)
-        system.initialize_agents()
-        
-        # Setup and run Streamlit UI
-        setup_streamlit()
-        render_ui()
-        
-        # Start system
         system.start()
-        
-    except Exception as e:
-        logger.error(f"Failed to start system: {str(e)}", exc_info=True)
-        sys.exit(1)
+        # Main application loop would go here
+        # For now, we'll just keep it running until interrupted
+        import time
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        logging.info("Shutting down...")
+    finally:
+        system.stop()
 
 if __name__ == "__main__":
     main()
