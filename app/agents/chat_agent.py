@@ -28,7 +28,7 @@ from ..utils.memory import MemoryManager
 class GroqChatModel(BaseChatModel):
     """Custom chat model class for Groq."""
     
-    def __init__(self, api_key: str, model: str = "llama3-groq-70b-8192-tool-use-preview", temperature: float = 0.7):
+    def __init__(self, api_key: str, model: str = "mixtral-8x7b-32768", temperature: float = 0.7):
         """Initialize the Groq chat model."""
         super().__init__()
         self._client = groq.Groq(api_key=api_key)
@@ -90,12 +90,15 @@ class ChatAgent:
     def __init__(self, config: Dict[str, Any]):
         """Initialize the chat agent with configuration."""
         try:
+            if not config.get('api_key'):
+                raise ValueError("Groq API key is not configured")
+            
             self.llm = GroqChatModel(
                 api_key=config.get('api_key'),
-                model=config.get('model', "llama3-groq-70b-8192-tool-use-preview"),
+                model=config.get('model', "mixtral-8x7b-32768"),
                 temperature=config.get('temperature', 0.7)
             )
-            logging.info("Successfully initialized Groq chat model")
+            logging.info(f"Successfully initialized Groq chat model with model: {config.get('model')}")
         except Exception as e:
             logging.error(f"Failed to initialize Groq: {str(e)}")
             raise

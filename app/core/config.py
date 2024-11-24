@@ -13,6 +13,9 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
     env_path = Path('.env')
     load_dotenv(env_path if env_path.exists() else '.env.example')
     
+    # Debug print
+    print(f"Debug - GROQ_API_KEY loaded: {'*' * 4}{os.getenv('GROQ_API_KEY')[-4:] if os.getenv('GROQ_API_KEY') else 'Not found'}")
+    
     config = {
         # Core settings
         'env': os.getenv('APP_ENV', 'development'),
@@ -27,8 +30,9 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
         
         # Agent settings
         'agent': {
-            'api_key': os.getenv('LLM_API_KEY', ''),
-            'model': os.getenv('LLM_MODEL', 'llama3-groq-70b-8192-tool-use-preview'),
+            'api_key': os.getenv('GROQ_API_KEY', ''),
+            'model': os.getenv('MODEL_NAME', 'mixtral-8x7b-32768'),
+            'temperature': float(os.getenv('MODEL_TEMPERATURE', '0.7')),
         },
         
         # Memory settings
