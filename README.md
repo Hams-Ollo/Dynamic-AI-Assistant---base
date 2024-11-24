@@ -5,6 +5,7 @@ A production-ready template for building AI chatbots and conversational agents u
 ## 🎯 Why Use This Template?
 
 - **Quick Start**: Get a production-ready chatbot running in minutes
+- **Dual Interfaces**: Choose between CLI or Web interface
 - **Best Practices**: Built-in logging, configuration, and security features
 - **Flexible Architecture**: Easy to extend and customize for your specific needs
 - **Modern Stack**: Async support, type hints, and modern Python patterns
@@ -55,6 +56,7 @@ A production-ready template for building AI chatbots and conversational agents u
    ```
 
    Edit `.env` with your configuration:
+
    ```env
    # Required: Your Groq API key
    GROQ_API_KEY=gsk_your_api_key_here
@@ -69,15 +71,50 @@ A production-ready template for building AI chatbots and conversational agents u
    MEMORY_PATH=./data/memory
    ```
 
-5. **Run the chatbot:**
+## 🖥️ Running the Application
 
-   ```bash
-   python main.py
-   ```
+You can run the application in two ways:
+
+### 1. Command Line Interface (CLI)
+
+Run the traditional command-line interface:
+
+```bash
+python main.py
+```
+
+The CLI interface provides:
+
+- Simple text-based interaction
+- Command history
+- Help commands
+- Quick testing and debugging
+
+### 2. Streamlit Web Interface
+
+Run the modern web interface:
+
+```bash
+streamlit run frontend/streamlit_app.py
+```
+
+The web interface offers:
+
+- Modern chat-like UI
+- Message history with user/AI distinction
+- Clear chat functionality
+- Helpful sidebar with tips
+- Progress indicators
+- Error handling with visual feedback
+
+Access the web interface at:
+
+- Local: <http://localhost:8501>
+- Network: <http://your-ip:8501>
 
 ## 📁 Project Structure
 
-```
+```curl
 multi-agent-chatbot/
 ├── app/                    # Main application code
 │   ├── agents/            # Agent implementations
@@ -88,18 +125,21 @@ multi-agent-chatbot/
 │   │   └── logging.py   # Logging setup
 │   └── utils/            # Utilities
 │       └── memory.py    # Memory management
-├── data/                  # Data storage
+├── frontend/             # Frontend interfaces
+│   └── streamlit_app.py # Streamlit web interface
+├── data/                 # Data storage
 │   └── memory/          # Vector store for conversation memory
-├── tests/                 # Test suite
-├── .env                   # Environment variables (create this)
-├── .env.example          # Example environment file
-├── requirements.txt       # Project dependencies
-└── main.py               # Application entry point
+├── tests/                # Test suite
+├── .env                  # Environment variables (create this)
+├── .env.example         # Example environment file
+├── requirements.txt     # Project dependencies
+└── main.py             # CLI application entry point
 ```
 
 ## 🔧 Configuration Options
 
 ### Model Configuration
+
 The template uses Groq's LLM API with the following configurable options in `.env`:
 
 - `MODEL_NAME`: The LLM model to use (default: mixtral-8x7b-32768)
@@ -107,6 +147,7 @@ The template uses Groq's LLM API with the following configurable options in `.en
 - `MODEL_MAX_TOKENS`: Maximum response length (default: 4096)
 
 ### Memory System
+
 The chat system includes a vector-based memory system for context retention:
 
 - `MEMORY_TYPE`: Memory system type (options: vector, buffer)
@@ -153,6 +194,32 @@ The chat system includes a vector-based memory system for context retention:
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🆘 Troubleshooting
+
+### Common Warnings
+
+1. **Hugging Face Warnings**
+
+   ```curl
+   FutureWarning: `resume_download` is deprecated...
+   ```
+
+   This is a harmless warning from the Hugging Face library and can be safely ignored.
+
+2. **LangChain Memory Warning**
+
+   ```curl
+   LangChainDeprecationWarning: Please see the migration guide...
+   ```
+
+   This warning indicates future LangChain updates. The current implementation is stable.
+
+3. **Torch Classes Warning**
+
+   ```curl
+   Examining the path of torch.classes raised...
+   ```
+
+   This is a known warning from PyTorch and doesn't affect functionality.
 
 ### Common Issues
 
