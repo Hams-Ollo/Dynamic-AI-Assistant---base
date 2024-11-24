@@ -1,6 +1,6 @@
 # 🤖 Multi-Agent Chatbot Template
 
-A production-ready template for building AI chatbots and conversational agents using modern best practices. This template provides everything you need to quickly start developing sophisticated chatbots with features like document processing, memory management, and flexible LLM integration.
+A production-ready template for building AI chatbots and conversational agents using modern best practices. This template provides everything you need to quickly start developing sophisticated chatbots powered by Groq's LLM API, featuring document processing, memory management, and flexible conversation handling.
 
 ## 🎯 Why Use This Template?
 
@@ -9,16 +9,17 @@ A production-ready template for building AI chatbots and conversational agents u
 - **Flexible Architecture**: Easy to extend and customize for your specific needs
 - **Modern Stack**: Async support, type hints, and modern Python patterns
 - **Production Ready**: Includes error handling, testing, and deployment configurations
+- **Advanced Features**: Vector-based memory, document processing, and more
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Python 3.8+
-- A Groq API key (get one at [groq.com](https://groq.com))
+- Groq API key (sign up at [console.groq.com](https://console.groq.com))
 - Git
 
-### Setup
+### Setup Steps
 
 1. **Clone the template:**
 
@@ -27,9 +28,10 @@ A production-ready template for building AI chatbots and conversational agents u
    cd multi-agent-chatbot-template
    ```
 
-2. **Create a virtual environment:**
+2. **Create and activate a virtual environment:**
 
    ```bash
+   # Create virtual environment
    python -m venv venv
    
    # Windows
@@ -45,16 +47,26 @@ A production-ready template for building AI chatbots and conversational agents u
    pip install -r requirements.txt
    ```
 
-4. **Set up your environment:**
+4. **Configure environment variables:**
 
    ```bash
+   # Copy the example environment file
    cp .env.example .env
    ```
 
-   Then edit `.env` with your API keys:
-
+   Edit `.env` with your configuration:
    ```env
-   GROQ_API_KEY=your-api-key-here
+   # Required: Your Groq API key
+   GROQ_API_KEY=gsk_your_api_key_here
+
+   # Optional: Model configuration (defaults shown)
+   MODEL_NAME=mixtral-8x7b-32768
+   MODEL_TEMPERATURE=0.7
+   MODEL_MAX_TOKENS=4096
+
+   # Optional: Memory configuration
+   MEMORY_TYPE=vector
+   MEMORY_PATH=./data/memory
    ```
 
 5. **Run the chatbot:**
@@ -65,131 +77,68 @@ A production-ready template for building AI chatbots and conversational agents u
 
 ## 📁 Project Structure
 
-```curl
+```
 multi-agent-chatbot/
 ├── app/                    # Main application code
 │   ├── agents/            # Agent implementations
-│   │   ├── base/         # Base agent classes
-│   │   ├── specialized/  # Specialized agents
 │   │   ├── chat_agent.py # Main chat agent
 │   │   └── document_processor.py
-│   ├── api/              # API endpoints
 │   ├── core/             # Core functionality
 │   │   ├── config.py    # Configuration management
 │   │   └── logging.py   # Logging setup
 │   └── utils/            # Utilities
 │       └── memory.py    # Memory management
+├── data/                  # Data storage
+│   └── memory/          # Vector store for conversation memory
 ├── tests/                 # Test suite
-├── .env                   # Environment variables
+├── .env                   # Environment variables (create this)
 ├── .env.example          # Example environment file
 ├── requirements.txt       # Project dependencies
 └── main.py               # Application entry point
 ```
+
+## 🔧 Configuration Options
+
+### Model Configuration
+The template uses Groq's LLM API with the following configurable options in `.env`:
+
+- `MODEL_NAME`: The LLM model to use (default: mixtral-8x7b-32768)
+- `MODEL_TEMPERATURE`: Controls response randomness (0.0-1.0, default: 0.7)
+- `MODEL_MAX_TOKENS`: Maximum response length (default: 4096)
+
+### Memory System
+The chat system includes a vector-based memory system for context retention:
+
+- `MEMORY_TYPE`: Memory system type (options: vector, buffer)
+- `MEMORY_PATH`: Storage location for conversation history
 
 ## 💡 Creating Your Own Agent
 
 1. **Create a new agent class:**
 
    ```python
-   from app.agents.base.base_agent import BaseAgent
+   from app.agents.chat_agent import ChatAgent
    
-   class MyCustomAgent(BaseAgent):
-       def __init__(self, api_key: str):
-           super().__init__(api_key)
+   class MyCustomAgent(ChatAgent):
+       def __init__(self, config: dict):
+           super().__init__(config)
            # Add your custom initialization
    
-       def process_message(self, message: str) -> dict:
-           # Add your custom message processing
-           return {
-               "response": "Your processed response",
-               "source_documents": []
-           }
+       async def process_message(self, message: str) -> dict:
+           # Implement your custom message processing
+           return await super().process_message(message)
    ```
 
-2. **Use the built-in features:**
+2. **Initialize your agent:**
 
    ```python
-   from app.utils.memory import MemoryManager
-   from app.agents.document_processor import DocumentProcessor
-   
-   class MyAgent:
-       def __init__(self):
-           # Initialize memory
-           self.memory = MemoryManager({
-               'type': 'buffer',
-               'path': './data/memory'
-           })
-           
-           # Initialize document processor
-           self.doc_processor = DocumentProcessor()
-           
-           # Process documents
-           docs = self.doc_processor.process_text("Your text here")
+   config = {
+       'api_key': 'your-groq-api-key',
+       'model': 'mixtral-8x7b-32768',
+       'temperature': 0.7
+   }
+   agent = MyCustomAgent(config)
    ```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Required variables in your `.env` file:
-
-```env
-# Required
-GROQ_API_KEY=your-groq-api-key
-
-# Optional
-LOG_LEVEL=INFO
-MEMORY_TYPE=buffer
-MEMORY_PATH=./data/memory
-```
-
-### Memory Configuration
-
-The template supports multiple memory types:
-
-```python
-# Buffer Memory (Default)
-memory_config = {
-    'type': 'buffer',
-    'path': './data/memory'
-}
-
-# Vector Memory
-memory_config = {
-    'type': 'vector',
-    'path': './data/memory',
-    'embedding_model': 'openai'
-}
-```
-
-## 🧪 Testing
-
-Run the test suite:
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=app tests/
-```
-
-## 📚 Best Practices
-
-1. **Error Handling**
-   - Always use try-except blocks for external API calls
-   - Log errors with appropriate levels
-   - Provide user-friendly error messages
-
-2. **Memory Management**
-   - Regularly clean up old conversations
-   - Use appropriate memory types for your use case
-   - Monitor memory usage in production
-
-3. **Security**
-   - Never commit API keys
-   - Use environment variables for sensitive data
-   - Implement rate limiting for production
 
 ## 🤝 Contributing
 
@@ -201,14 +150,24 @@ pytest --cov=app tests/
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🙋‍♂️ Getting Help
+## 🆘 Troubleshooting
 
-- Create an issue for bug reports or feature requests
-- Check existing issues for common problems
-- Read the documentation in the `docs` folder
+### Common Issues
 
----
+1. **Connection Errors**
+   - Verify your Groq API key is correct and properly set in `.env`
+   - Check your internet connection
+   - Ensure you can access api.groq.com
+   - Try disabling VPN if you're using one
 
-Built with ❤️ by [Your Name/Organization]
+2. **Memory System Errors**
+   - Ensure the `data/memory` directory exists
+   - Check write permissions for the memory directory
+
+3. **Model Response Issues**
+   - Try adjusting the `MODEL_TEMPERATURE` for different response styles
+   - Ensure `MODEL_MAX_TOKENS` is appropriate for your use case
+
+For more help, please open an issue on the GitHub repository.
