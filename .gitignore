@@ -188,6 +188,7 @@ uploads/
 .temp/
 tmp/
 /audio_scrapes
+/text_scrapes
 
 # Database files
 *.sqlite
