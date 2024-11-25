@@ -187,6 +187,7 @@ static/
 uploads/
 .temp/
 tmp/
+/audio_scrapes
 
 # Database files
 *.sqlite
