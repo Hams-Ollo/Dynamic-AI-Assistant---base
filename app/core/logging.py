@@ -3,36 +3,38 @@ Logging configuration for the application.
 """
 import logging
 import sys
-from typing import Union, Optional
+from typing import Union, Optional, Dict, Any
 
-def setup_logging(level: Union[str, int] = logging.INFO, 
-                 log_file: Optional[str] = None) -> None:
+def setup_logging(config: Dict[str, Any]) -> None:
     """Configure application-wide logging.
     
     Args:
-        level: The logging level (default: INFO)
-        log_file: Optional path to log file. If not provided, logs to stdout.
+        config: Configuration dictionary containing logging settings
     """
+    # Get log level from config
+    level = config.get('log_level', 'INFO')
+    
     # Convert string level to logging constant if needed
     if isinstance(level, str):
         level = getattr(logging, level.upper(), logging.INFO)
     
     # Basic configuration
-    config = {
+    log_config = {
         'level': level,
-        'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        'format': '%(asctime)s - %(levelname)s - %(message)s',
         'datefmt': '%Y-%m-%d %H:%M:%S',
     }
     
-    # Add file handler if log_file is specified
+    # Add file handler if log file path is specified in config
+    log_file = config.get('log_file')
     if log_file:
-        config['filename'] = log_file
-        config['filemode'] = 'a'
+        log_config['filename'] = log_file
+        log_config['filemode'] = 'a'
     else:
-        config['stream'] = sys.stdout
+        log_config['stream'] = sys.stdout
     
     # Apply configuration
-    logging.basicConfig(**config)
+    logging.basicConfig(**log_config)
     
     # Create logger
     logger = logging.getLogger(__name__)

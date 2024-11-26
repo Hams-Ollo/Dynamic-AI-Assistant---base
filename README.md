@@ -1,38 +1,47 @@
-# 🤖 Multi-Agent Chatbot Template
+# 🤖 Advanced Multi-Agent AI Chat System
 
-A production-ready template for building AI chatbots and conversational agents using modern best practices. This template provides everything you need to quickly start developing sophisticated chatbots powered by Groq's LLM API, featuring document processing, memory management, and flexible conversation handling.
+A sophisticated, context-aware conversational AI application built with modern async Python. Powered by Groq's Mixtral LLM, LangChain, and Streamlit, this system demonstrates production-ready practices for building intelligent conversational agents with advanced memory management and intent classification capabilities.
 
-## 🎯 Why Use This Template?
+## 🌟 Key Features
 
-- **Quick Start**: Get a production-ready chatbot running in minutes
-- **Dual Interfaces**: Choose between CLI or Web interface
-- **Best Practices**: Built-in logging, configuration, and security features
-- **Flexible Architecture**: Easy to extend and customize for your specific needs
-- **Modern Stack**: Async support, type hints, and modern Python patterns
-- **Production Ready**: Includes error handling, testing, and deployment configurations
-- **Advanced Features**: Vector-based memory, document processing, and more
+- **Intelligent Intent Classification**: LLM-powered understanding of user intentions
+- **Context-Aware Responses**: Vector-based memory for enhanced conversation history
+- **Advanced Memory Management**: Semantic search and conversation tracking using ChromaDB
+- **Modern Tech Stack**: Groq LLM, LangChain, HuggingFace Embeddings, Streamlit UI
+- **Async Architecture**: Non-blocking design with proper resource management
+- **Production Ready**: Comprehensive error handling and graceful shutdown
+
+## 🛠️ Technical Stack
+
+- **Core Framework**: Python 3.12+
+- **LLM Integration**: Groq API (Mixtral-8x7b-32768)
+- **Memory & Embeddings**:
+  - LangChain for memory management
+  - HuggingFace Embeddings (all-MiniLM-L6-v2)
+  - ChromaDB for vector storage
+- **Frontend**: Streamlit
+- **Dependencies**: Redis, TensorFlow, PyTorch
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.8+
-- Groq API key (sign up at [console.groq.com](https://console.groq.com))
+- Python 3.12+
+- Groq API key (get one at [console.groq.com](https://console.groq.com))
 - Git
 
-### Setup Steps
+### Setup
 
-1. **Clone the template:**
+1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/yourusername/multi-agent-chatbot-template.git
-   cd multi-agent-chatbot-template
+   git clone https://github.com/yourusername/multi-agent-chat-system.git
+   cd multi-agent-chat-system
    ```
 
-2. **Create and activate a virtual environment:**
+2. **Set up virtual environment:**
 
    ```bash
-   # Create virtual environment
    python -m venv venv
    
    # Windows
@@ -48,193 +57,135 @@ A production-ready template for building AI chatbots and conversational agents u
    pip install -r requirements.txt
    ```
 
-4. **Configure environment variables:**
+4. **Configure environment:**
 
    ```bash
-   # Copy the example environment file
    cp .env.example .env
    ```
 
-   Edit `.env` with your configuration:
+   Edit `.env` with your settings:
 
    ```env
-   # Required: Your Groq API key
-   GROQ_API_KEY=gsk_your_api_key_here
-
-   # Optional: Model configuration (defaults shown)
+   # Required
+   GROQ_API_KEY=your_api_key_here
+   
+   # Optional
+   APP_ENV=development
+   DEBUG=true
+   LOG_LEVEL=INFO
+   
+   # Model Settings
    MODEL_NAME=mixtral-8x7b-32768
    MODEL_TEMPERATURE=0.7
-   MODEL_MAX_TOKENS=4096
-
-   # Optional: Memory configuration
+   
+   # Memory Settings
    MEMORY_TYPE=vector
+   MEMORY_BACKEND=chroma
    MEMORY_PATH=./data/memory
    ```
 
-## 🖥️ Running the Application
+5. **Run the application:**
 
-You can run the application in two ways:
+   ```bash
+   streamlit run frontend/streamlit_app.py
+   ```
 
-### 1. Command Line Interface (CLI)
+## 🏗️ System Architecture
 
-Run the traditional command-line interface:
+### Core Components
 
-```bash
-python main.py
-```
+1. **ChatAgent** (`app/agents/chat_agent.py`)
+   - Async message processing
+   - Intent classification using LLM reasoning
+   - Context-aware response generation
+   - Resource management and cleanup
 
-The CLI interface provides:
+2. **MemoryManager** (`app/utils/memory.py`)
+   - LangChain-based memory management
+   - Vector-based semantic search with ChromaDB
+   - Conversation history tracking
+   - Redis integration for scalable storage
 
-- Simple text-based interaction
-- Command history
-- Help commands
-- Quick testing and debugging
+3. **Streamlit Frontend** (`frontend/streamlit_app.py`)
+   - Modern, responsive UI
+   - Async message handling
+   - Real-time response streaming
+   - Session state management
 
-### 2. Streamlit Web Interface
+### Key Features
 
-Run the modern web interface:
+#### Async Operations
 
-```bash
-streamlit run frontend/streamlit_app.py
-```
+- Non-blocking I/O for better performance
+- Proper async initialization and cleanup
+- Graceful error handling
 
-The web interface offers:
+#### Memory Management
 
-- Modern chat-like UI
-- Message history with user/AI distinction
-- Clear chat functionality
-- Helpful sidebar with tips
-- Progress indicators
-- Error handling with visual feedback
+- ChatMessageHistory for conversation tracking
+- Vector-based semantic search
+- Efficient cleanup and resource management
+- Redis integration for scalable storage
 
-Access the web interface at:
+#### LLM Integration
 
-- Local: <http://localhost:8501>
-- Network: <http://your-ip:8501>
+- Groq API with Mixtral model
+- Temperature and context-length control
+- Fallback handling for API issues
 
-## 📁 Project Structure
+## 📚 Project Structure
 
 ```curl
-multi-agent-chatbot/
-├── app/                    # Main application code
-│   ├── agents/            # Agent implementations
-│   │   ├── chat_agent.py # Main chat agent
-│   │   └── document_processor.py
-│   ├── core/             # Core functionality
-│   │   ├── config.py    # Configuration management
-│   │   └── logging.py   # Logging setup
-│   └── utils/            # Utilities
-│       └── memory.py    # Memory management
-├── frontend/             # Frontend interfaces
-│   └── streamlit_app.py # Streamlit web interface
-├── data/                 # Data storage
-│   └── memory/          # Vector store for conversation memory
-├── tests/                # Test suite
-├── .env                  # Environment variables (create this)
-├── .env.example         # Example environment file
-├── requirements.txt     # Project dependencies
-└── main.py             # CLI application entry point
+multi-agent-chat-system/
+├── app/
+│   ├── agents/
+│   │   └── chat_agent.py
+│   ├── utils/
+│   │   └── memory.py
+│   └── core/
+│       └── config.py
+├── frontend/
+│   └── streamlit_app.py
+├── data/
+│   └── memory/
+├── scripts/
+│   └── text_scraper.py
+├── requirements.txt
+└── .env
 ```
 
-## 🔧 Configuration Options
+## 🔧 Configuration
 
-### Model Configuration
+### Environment Variables
 
-The template uses Groq's LLM API with the following configurable options in `.env`:
+- `GROQ_API_KEY`: Your Groq API key
+- `APP_ENV`: development/production
+- `DEBUG`: true/false
+- `LOG_LEVEL`: INFO/DEBUG/WARNING
+- `MODEL_NAME`: mixtral-8x7b-32768
+- `MODEL_TEMPERATURE`: 0.7 (default)
 
-- `MODEL_NAME`: The LLM model to use (default: mixtral-8x7b-32768)
-- `MODEL_TEMPERATURE`: Controls response randomness (0.0-1.0, default: 0.7)
-- `MODEL_MAX_TOKENS`: Maximum response length (default: 4096)
+### Memory Settings
 
-### Memory System
-
-The chat system includes a vector-based memory system for context retention:
-
-- `MEMORY_TYPE`: Memory system type (options: vector, buffer)
-- `MEMORY_PATH`: Storage location for conversation history
-
-## 💡 Creating Your Own Agent
-
-1. **Create a new agent class:**
-
-   ```python
-   from app.agents.chat_agent import ChatAgent
-   
-   class MyCustomAgent(ChatAgent):
-       def __init__(self, config: dict):
-           super().__init__(config)
-           # Add your custom initialization
-   
-       async def process_message(self, message: str) -> dict:
-           # Implement your custom message processing
-           return await super().process_message(message)
-   ```
-
-2. **Initialize your agent:**
-
-   ```python
-   config = {
-       'api_key': 'your-groq-api-key',
-       'model': 'mixtral-8x7b-32768',
-       'temperature': 0.7
-   }
-   agent = MyCustomAgent(config)
-   ```
+- Vector store location: `./data/memory`
+- Redis configuration (optional)
+- Cleanup timeout: 5 seconds (default)
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
 5. Open a Pull Request
 
 ## 📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🆘 Troubleshooting
+## 🙏 Acknowledgments
 
-### Common Warnings
-
-1. **Hugging Face Warnings**
-
-   ```curl
-   FutureWarning: `resume_download` is deprecated...
-   ```
-
-   This is a harmless warning from the Hugging Face library and can be safely ignored.
-
-2. **LangChain Memory Warning**
-
-   ```curl
-   LangChainDeprecationWarning: Please see the migration guide...
-   ```
-
-   This warning indicates future LangChain updates. The current implementation is stable.
-
-3. **Torch Classes Warning**
-
-   ```curl
-   Examining the path of torch.classes raised...
-   ```
-
-   This is a known warning from PyTorch and doesn't affect functionality.
-
-### Common Issues
-
-1. **Connection Errors**
-   - Verify your Groq API key is correct and properly set in `.env`
-   - Check your internet connection
-   - Ensure you can access api.groq.com
-   - Try disabling VPN if you're using one
-
-2. **Memory System Errors**
-   - Ensure the `data/memory` directory exists
-   - Check write permissions for the memory directory
-
-3. **Model Response Issues**
-   - Try adjusting the `MODEL_TEMPERATURE` for different response styles
-   - Ensure `MODEL_MAX_TOKENS` is appropriate for your use case
-
-For more help, please open an issue on the GitHub repository.
+- Groq Team for the LLM API
+- LangChain community
+- HuggingFace for embeddings
+- Streamlit team

@@ -48,6 +48,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 import time
 from colorama import init, Fore, Style
+import asyncio
 
 from app.core.config import load_config
 from app.core.logging import setup_logging
@@ -87,88 +88,120 @@ class ChatSystem:
     """Main application class for the chat system."""
     
     def __init__(self, config: Dict[str, Any]):
+        """Initialize the chat system."""
         self.config = config
-        print(f"{Fore.CYAN}📚 Initializing Memory System...{Style.RESET_ALL}")
         self.memory_manager = MemoryManager(config.get('memory', {}))
-        print(f"{Fore.CYAN}🤖 Initializing AI Agent...{Style.RESET_ALL}")
         self.agent = ChatAgent(config.get('agent', {}))
-    
-    def start(self):
-        """Start the chat system."""
+        
+    async def initialize(self):
+        """Initialize all system components."""
         try:
-            self.agent.initialize(self.memory_manager)
-            print(f"{Fore.GREEN}✨ Chat system initialized successfully!{Style.RESET_ALL}")
+            # Initialize memory system
+            await self.memory_manager.initialize()
+            logging.info("Memory system initialized")
+            
+            # Initialize chat agent
+            await self.agent.initialize()
+            logging.info("Chat agent initialized")
+            
         except Exception as e:
             logging.error(f"Failed to start chat system: {str(e)}")
-            print(f"{Fore.RED}❌ Failed to start chat system: {str(e)}{Style.RESET_ALL}")
-            sys.exit(1)
-    
-    def stop(self):
-        """Gracefully stop the chat system."""
+            await self.cleanup()
+            raise
+            
+    async def cleanup(self):
+        """Cleanup system resources."""
         try:
-            print(f"\n{Fore.YELLOW}🔄 Cleaning up resources...{Style.RESET_ALL}")
-            self.agent.cleanup()
-            self.memory_manager.cleanup()
-            print(f"{Fore.GREEN}👋 Chat system stopped successfully. Goodbye!{Style.RESET_ALL}")
+            logging.info("Starting system cleanup...")
+            
+            # Cleanup components in parallel
+            cleanup_tasks = []
+            
+            if hasattr(self, 'agent') and self.agent:
+                cleanup_tasks.append(self.agent.cleanup())
+                
+            if hasattr(self, 'memory_manager') and self.memory_manager:
+                cleanup_tasks.append(self.memory_manager.cleanup())
+                
+            if cleanup_tasks:
+                # Wait for all cleanup tasks with timeout
+                await asyncio.wait_for(
+                    asyncio.gather(*cleanup_tasks, return_exceptions=True),
+                    timeout=5.0
+                )
+            
+            logging.info("System cleanup completed")
+            
+        except asyncio.TimeoutError:
+            logging.error("System cleanup timed out")
         except Exception as e:
-            logging.error(f"Error during system shutdown: {str(e)}")
-            print(f"{Fore.RED}❌ Error during system shutdown: {str(e)}{Style.RESET_ALL}")
-
-    def chat_loop(self):
-        """Run the main chat loop."""
-        print_welcome_message()
+            logging.error(f"Error during system cleanup: {str(e)}")
+            
+async def main():
+    """Main entry point for the chat system."""
+    system = None
+    try:
+        print("\n🚀 Initializing AI Chat System...")
         
+        # Load configuration and setup logging
+        config = load_config()
+        setup_logging(config)
+        
+        # Initialize chat system
+        system = ChatSystem(config)
+        await system.initialize()
+        
+        # Start the chat loop
         while True:
             try:
-                # Get user input with a cool prompt
-                user_input = input(f"{Fore.CYAN}🧑‍💻 You: {Style.RESET_ALL}")
-                
-                # Handle commands
-                if user_input.lower() == 'exit':
+                message = input("\nYou: ").strip()
+                if not message:
+                    continue
+                    
+                if message.lower() in ['exit', 'quit', 'bye']:
+                    print("\n👋 Goodbye!")
                     break
-                elif user_input.lower() == 'help':
-                    print_help()
-                    continue
-                elif user_input.lower() == 'clear':
-                    os.system('cls' if os.name == 'nt' else 'clear')
-                    print_welcome_message()
-                    continue
-                elif not user_input.strip():
-                    continue
-                
-                # Process message and get response
-                print(f"{Fore.YELLOW}🤔 AI is thinking...{Style.RESET_ALL}")
-                result = self.agent.process_message(user_input)
-                
-                # Print AI response
-                print(f"{Fore.GREEN}🤖 AI: {Style.RESET_ALL}{result['response']}\n")
-                
-                # If there are source documents, show them
-                if result.get('source_documents'):
-                    print(f"{Fore.BLUE}📚 Sources used:{Style.RESET_ALL}")
-                    for doc in result['source_documents']:
-                        print(f"  • {doc.page_content[:100]}...")
-                    print()
+                    
+                response = await system.agent.process_message(message)
+                print(f"\nAI: {response['response']}")
                 
             except KeyboardInterrupt:
-                print(f"\n{Fore.YELLOW}⚠️  Detected Ctrl+C{Style.RESET_ALL}")
+                print("\n\n👋 Gracefully shutting down...")
                 break
             except Exception as e:
-                print(f"{Fore.RED}❌ Error: {str(e)}{Style.RESET_ALL}")
-                logging.error(f"Error in chat loop: {str(e)}")
-
-def main():
-    """Main entry point for the application."""
-    config = initialize_app()
-    
-    system = ChatSystem(config)
-    try:
-        system.start()
-        system.chat_loop()
+                logging.error(f"Error processing message: {str(e)}")
+                print("\n❌ Sorry, I encountered an error. Please try again.")
+                
     except KeyboardInterrupt:
-        print(f"\n{Fore.YELLOW}⚠️  Shutting down...{Style.RESET_ALL}")
+        print("\n\n👋 Gracefully shutting down...")
+    except Exception as e:
+        print(f"\n❌ Failed to start chat system: {str(e)}")
     finally:
-        system.stop()
+        if system:
+            print("\n🔄 Cleaning up resources...")
+            try:
+                await asyncio.wait_for(system.cleanup(), timeout=5.0)
+            except asyncio.TimeoutError:
+                print("⚠️  Cleanup timed out, forcing exit...")
+            except Exception as e:
+                logging.error(f"Error during cleanup: {str(e)}")
+                print("⚠️  Error during cleanup")
+
+def run_chat_system():
+    """Run the chat system with proper signal handling."""
+    try:
+        if sys.platform == 'win32':
+            loop = asyncio.ProactorEventLoop()
+            asyncio.set_event_loop(loop)
+        else:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+        loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        print("\n\n👋 Goodbye!")
+    finally:
+        loop.close()
 
 if __name__ == "__main__":
-    main()
+    run_chat_system()
