@@ -1,22 +1,32 @@
 # 🤖 Advanced Multi-Agent AI Chat System
 
-A sophisticated AI chat system featuring advanced intent classification, research capabilities, and context-aware response generation. Built with modern async Python and powered by Groq's LLM API, this system demonstrates production-ready practices for building intelligent conversational agents.
+A sophisticated, context-aware conversational AI application built with modern async Python. Powered by Groq's Mixtral LLM, LangChain, and Streamlit, this system demonstrates production-ready practices for building intelligent conversational agents with advanced memory management and intent classification capabilities.
 
 ## 🌟 Key Features
 
 - **Intelligent Intent Classification**: LLM-powered understanding of user intentions
-- **Dynamic Research Capabilities**: Smart web scraping with quality scoring
-- **Context-Aware Responses**: Vector-based memory for conversation history
-- **Robust Architecture**: Async-first design with proper resource management
+- **Context-Aware Responses**: Vector-based memory for enhanced conversation history
+- **Advanced Memory Management**: Semantic search and conversation tracking using ChromaDB
+- **Modern Tech Stack**: Groq LLM, LangChain, HuggingFace Embeddings, Streamlit UI
+- **Async Architecture**: Non-blocking design with proper resource management
 - **Production Ready**: Comprehensive error handling and graceful shutdown
-- **Advanced Memory System**: Semantic search and conversation tracking
-- **Modern Tech Stack**: Groq LLM, HuggingFace Embeddings, ChromaDB
+
+## 🛠️ Technical Stack
+
+- **Core Framework**: Python 3.12+
+- **LLM Integration**: Groq API (Mixtral-8x7b-32768)
+- **Memory & Embeddings**:
+  - LangChain for memory management
+  - HuggingFace Embeddings (all-MiniLM-L6-v2)
+  - ChromaDB for vector storage
+- **Frontend**: Streamlit
+- **Dependencies**: Redis, TensorFlow, PyTorch
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.12+
 - Groq API key (get one at [console.groq.com](https://console.groq.com))
 - Git
 
@@ -74,136 +84,108 @@ A sophisticated AI chat system featuring advanced intent classification, researc
    MEMORY_PATH=./data/memory
    ```
 
+5. **Run the application:**
+
+   ```bash
+   streamlit run frontend/streamlit_app.py
+   ```
+
 ## 🏗️ System Architecture
 
 ### Core Components
 
 1. **ChatAgent** (`app/agents/chat_agent.py`)
+   - Async message processing
    - Intent classification using LLM reasoning
-   - Context-aware message processing
-   - Advanced response generation
-   - Resource cleanup management
+   - Context-aware response generation
+   - Resource management and cleanup
 
-2. **TextScraper** (`scripts/text_scraper.py`)
-   - Intelligent web content extraction
-   - Content quality scoring
-   - Caching mechanism
-   - Async session management
-
-3. **MemoryManager** (`app/utils/memory.py`)
-   - Vector-based semantic search
+2. **MemoryManager** (`app/utils/memory.py`)
+   - LangChain-based memory management
+   - Vector-based semantic search with ChromaDB
    - Conversation history tracking
-   - Persistent storage
-   - Efficient cleanup handling
+   - Redis integration for scalable storage
+
+3. **Streamlit Frontend** (`frontend/streamlit_app.py`)
+   - Modern, responsive UI
+   - Async message handling
+   - Real-time response streaming
+   - Session state management
 
 ### Key Features
 
-- **Async Operations**: Non-blocking I/O for better performance
-- **Graceful Shutdown**: Proper resource cleanup and error handling
-- **Intelligent Research**: Dynamic content discovery and evaluation
-- **Context Understanding**: Advanced conversation memory management
+#### Async Operations
 
-## 💻 Usage
+- Non-blocking I/O for better performance
+- Proper async initialization and cleanup
+- Graceful error handling
 
-Run the chat system:
+#### Memory Management
 
-```bash
-python main.py
-```
+- ChatMessageHistory for conversation tracking
+- Vector-based semantic search
+- Efficient cleanup and resource management
+- Redis integration for scalable storage
 
-### Commands
+#### LLM Integration
 
-- Type your message and press Enter to chat
-- Use 'exit', 'quit', or 'bye' to exit
-- Press Ctrl+C for graceful shutdown
+- Groq API with Mixtral model
+- Temperature and context-length control
+- Fallback handling for API issues
 
-## 🛠️ Development
-
-### Project Structure
+## 📚 Project Structure
 
 ```curl
 multi-agent-chat-system/
 ├── app/
 │   ├── agents/
-│   │   └── chat_agent.py     # Main chat agent
-│   ├── core/
-│   │   ├── config.py         # Configuration
-│   │   └── logging.py        # Logging setup
-│   └── utils/
-│       └── memory.py         # Memory management
-├── scripts/
-│   └── text_scraper.py       # Web scraping
+│   │   └── chat_agent.py
+│   ├── utils/
+│   │   └── memory.py
+│   └── core/
+│       └── config.py
+├── frontend/
+│   └── streamlit_app.py
 ├── data/
-│   └── memory/              # Vector store
-├── tests/
-├── .env                     # Configuration
-└── main.py                 # Entry point
+│   └── memory/
+├── scripts/
+│   └── text_scraper.py
+├── requirements.txt
+└── .env
 ```
-
-### Error Handling
-
-- Comprehensive exception handling
-- Graceful cleanup on interruption
-- Timeout protection for async operations
-- Clear error messages and logging
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-- `APP_ENV`: Environment (development/production)
-- `DEBUG`: Enable debug mode
-- `LOG_LEVEL`: Logging verbosity
-- `GROQ_API_KEY`: API key for LLM
-- `MODEL_NAME`: LLM model selection
-- `MODEL_TEMPERATURE`: Response randomness
-- `MEMORY_TYPE`: Memory system type
-- `MEMORY_BACKEND`: Vector store backend
-- `MEMORY_PATH`: Storage location
+- `GROQ_API_KEY`: Your Groq API key
+- `APP_ENV`: development/production
+- `DEBUG`: true/false
+- `LOG_LEVEL`: INFO/DEBUG/WARNING
+- `MODEL_NAME`: mixtral-8x7b-32768
+- `MODEL_TEMPERATURE`: 0.7 (default)
+
+### Memory Settings
+
+- Vector store location: `./data/memory`
+- Redis configuration (optional)
+- Cleanup timeout: 5 seconds (default)
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
 5. Open a Pull Request
 
 ## 📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🆘 Troubleshooting
+## 🙏 Acknowledgments
 
-### Common Issues
-
-1. **Initialization Errors**
-   - Ensure GROQ_API_KEY is set correctly
-   - Check Python version (3.8+ required)
-   - Verify all dependencies are installed
-
-2. **Memory System Warnings**
-   - Ensure MEMORY_PATH directory exists
-   - Check disk space for vector store
-   - Verify proper permissions
-
-3. **Cleanup Timeouts**
-   - Default timeout is 5 seconds
-   - Adjust in code if needed for slower systems
-   - Check for hanging network connections
-
-### Debug Mode
-
-Enable debug mode in `.env`:
-
-```env
-DEBUG=true
-LOG_LEVEL=DEBUG
-```
-
-## 📚 Resources
-
-- [Groq API Documentation](https://console.groq.com/docs)
-- [HuggingFace Transformers](https://huggingface.co/docs/transformers)
-- [ChromaDB Documentation](https://docs.trychroma.com/)
-- [aiohttp Documentation](https://docs.aiohttp.org/)
+- Groq Team for the LLM API
+- LangChain community
+- HuggingFace for embeddings
+- Streamlit team
