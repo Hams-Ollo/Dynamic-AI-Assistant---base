@@ -1,26 +1,23 @@
-# 🤖 Advanced Multi-Agent AI Chat System
+# 🤖 Multi-Agent RAG Chatbot Template
 
-A sophisticated, context-aware conversational AI application built with modern async Python. Powered by Groq's Mixtral LLM, LangChain, and Streamlit, this system demonstrates production-ready practices for building intelligent conversational agents with advanced memory management and intent classification capabilities.
+A customizable template for quickly deploying Retrieval-Augmented Generation (RAG) chatbots. Built with Groq's Mixtral LLM, LangChain, and Streamlit, this template provides a production-ready foundation that's easy to adapt for various use cases.
 
 ## 🌟 Key Features
 
-- **Intelligent Intent Classification**: LLM-powered understanding of user intentions
-- **Context-Aware Responses**: Vector-based memory for enhanced conversation history
-- **Advanced Memory Management**: Semantic search and conversation tracking using ChromaDB
-- **Modern Tech Stack**: Groq LLM, LangChain, HuggingFace Embeddings, Streamlit UI
-- **Async Architecture**: Non-blocking design with proper resource management
-- **Production Ready**: Comprehensive error handling and graceful shutdown
-
-## 🛠️ Technical Stack
-
-- **Core Framework**: Python 3.12+
-- **LLM Integration**: Groq API (Mixtral-8x7b-32768)
-- **Memory & Embeddings**:
-  - LangChain for memory management
-  - HuggingFace Embeddings (all-MiniLM-L6-v2)
+- **Document-Enhanced Conversations**: RAG capabilities for context-aware responses
+- **Multi-Page Interface**:
+  - 💬 AI Chat Agent: Main conversation interface
+  - 🏠 Home: Quick start guide and features overview
+  - 📚 Document Upload: File management and processing
+- **Document Processing**:
+  - Support for PDF, TXT, DOCX, and MD files
+  - Automatic chunking and vectorization
+  - Semantic search for relevant context
+- **Modern Tech Stack**:
+  - Groq Mixtral LLM for fast, accurate responses
+  - LangChain for RAG and memory management
   - ChromaDB for vector storage
-- **Frontend**: Streamlit
-- **Dependencies**: Redis, TensorFlow, PyTorch
+  - Streamlit for clean, responsive UI
 
 ## 🚀 Quick Start
 
@@ -28,15 +25,14 @@ A sophisticated, context-aware conversational AI application built with modern a
 
 - Python 3.12+
 - Groq API key (get one at [console.groq.com](https://console.groq.com))
-- Git
 
 ### Setup
 
-1. **Clone the repository:**
+1. **Clone and customize the template:**
 
    ```bash
-   git clone https://github.com/yourusername/multi-agent-chat-system.git
-   cd multi-agent-chat-system
+   git clone https://github.com/yourusername/multi-agent-rag-template.git
+   cd multi-agent-rag-template
    ```
 
 2. **Set up virtual environment:**
@@ -66,126 +62,58 @@ A sophisticated, context-aware conversational AI application built with modern a
    Edit `.env` with your settings:
 
    ```env
-   # Required
    GROQ_API_KEY=your_api_key_here
-   
-   # Optional
-   APP_ENV=development
-   DEBUG=true
-   LOG_LEVEL=INFO
-   
-   # Model Settings
    MODEL_NAME=mixtral-8x7b-32768
    MODEL_TEMPERATURE=0.7
-   
-   # Memory Settings
-   MEMORY_TYPE=vector
-   MEMORY_BACKEND=chroma
-   MEMORY_PATH=./data/memory
    ```
 
 5. **Run the application:**
 
    ```bash
-   streamlit run frontend/streamlit_app.py
+   streamlit run frontend/Chat.py
    ```
 
-## 🏗️ System Architecture
+## 🎯 Use Cases
 
-### Core Components
+- **Documentation Assistant**: Upload technical docs for instant expert support
+- **Knowledge Base**: Create a smart FAQ system from your content
+- **Research Helper**: Process and query academic papers or research documents
+- **Legal Assistant**: Analyze and query legal documents and contracts
+- **Training Material**: Create interactive learning systems from training content
 
-1. **ChatAgent** (`app/agents/chat_agent.py`)
-   - Async message processing
-   - Intent classification using LLM reasoning
-   - Context-aware response generation
-   - Resource management and cleanup
+## 🔧 Customization
 
-2. **MemoryManager** (`app/utils/memory.py`)
-   - LangChain-based memory management
-   - Vector-based semantic search with ChromaDB
-   - Conversation history tracking
-   - Redis integration for scalable storage
+The template is designed for easy customization:
 
-3. **Streamlit Frontend** (`frontend/streamlit_app.py`)
-   - Modern, responsive UI
-   - Async message handling
-   - Real-time response streaming
-   - Session state management
-
-### Key Features
-
-#### Async Operations
-
-- Non-blocking I/O for better performance
-- Proper async initialization and cleanup
-- Graceful error handling
-
-#### Memory Management
-
-- ChatMessageHistory for conversation tracking
-- Vector-based semantic search
-- Efficient cleanup and resource management
-- Redis integration for scalable storage
-
-#### LLM Integration
-
-- Groq API with Mixtral model
-- Temperature and context-length control
-- Fallback handling for API issues
+1. **Document Processing**: Adjust chunking and embedding in `document_processor.py`
+2. **Chat Behavior**: Modify prompts and logic in `chat_agent.py`
+3. **UI/UX**: Customize the interface in the frontend Streamlit files
+4. **Vector Storage**: Configure or swap ChromaDB settings as needed
 
 ## 📚 Project Structure
 
 ```curl
-multi-agent-chat-system/
 ├── app/
 │   ├── agents/
-│   │   └── chat_agent.py
-│   ├── utils/
-│   │   └── memory.py
-│   └── core/
-│       └── config.py
+│   │   └── chat_agent.py      # Core chat logic and RAG integration
+│   └── utils/
+│       └── document_processor.py  # Document handling and vectorization
 ├── frontend/
-│   └── streamlit_app.py
-├── data/
-│   └── memory/
-├── scripts/
-│   └── text_scraper.py
-├── requirements.txt
-└── .env
+│   ├── Chat.py               # Main chat interface
+│   └── pages/
+│       ├── 0_🏠_Home.py      # Home page and documentation
+│       └── 1_📚_Document_Upload.py  # Document management
+└── requirements.txt          # Project dependencies
 ```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-- `GROQ_API_KEY`: Your Groq API key
-- `APP_ENV`: development/production
-- `DEBUG`: true/false
-- `LOG_LEVEL`: INFO/DEBUG/WARNING
-- `MODEL_NAME`: mixtral-8x7b-32768
-- `MODEL_TEMPERATURE`: 0.7 (default)
-
-### Memory Settings
-
-- Vector store location: `./data/memory`
-- Redis configuration (optional)
-- Cleanup timeout: 5 seconds (default)
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+Contributions are welcome! Feel free to:
 
-## 📝 License
+- Fork the repository
+- Create a feature branch
+- Submit a pull request
+
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- Groq Team for the LLM API
-- LangChain community
-- HuggingFace for embeddings
-- Streamlit team
