@@ -14,8 +14,13 @@
 #
 #-------------------------------------------------------------------------------------#
 #----------# IMPORTS  #----------#
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 import logging
+import re
+from datetime import datetime
+import uuid
+from enum import Enum
+import json
 
 import groq
 from langchain.schema import AIMessage, HumanMessage, SystemMessage, BaseMessage, ChatResult, ChatGeneration
@@ -24,6 +29,12 @@ from langchain.callbacks.manager import CallbackManagerForLLMRun
 
 from .document_processor import DocumentProcessor
 from ..utils.memory import MemoryManager
+from scripts.text_scraper import TextScraper
+
+class QueryIntent(Enum):
+    GENERAL_CHAT = "general_chat"
+    NEED_RESEARCH = "need_research"
+    NEED_UPDATE = "need_update"
 
 class GroqChatModel(BaseChatModel):
     """Custom chat model class for Groq."""
@@ -55,7 +66,7 @@ class GroqChatModel(BaseChatModel):
         """Return identifier of llm."""
         return "groq"
 
-    def _generate(self, messages: List[BaseMessage], stop: Optional[List[str]] = None, run_manager: Optional[CallbackManagerForLLMRun] = None, **kwargs: Any) -> ChatResult:
+    async def _generate(self, messages: List[BaseMessage], stop: Optional[List[str]] = None, run_manager: Optional[CallbackManagerForLLMRun] = None, **kwargs: Any) -> ChatResult:
         """Generate chat response."""
         try:
             # Convert messages to chat format
@@ -89,136 +100,321 @@ class ChatAgent:
     
     def __init__(self, config: Dict[str, Any]):
         """Initialize the chat agent with configuration."""
+        self.config = config
+        self.memory = MemoryManager(config.get('memory', {}))
+        self.text_scraper = TextScraper()
+        self._setup_llm()
+        self._setup_intent_classifier()
+        self.initialized = False
+        logging.info("Chat agent created")
+
+    async def initialize(self):
+        """Initialize the chat agent's components."""
         try:
-            if not config.get('api_key'):
-                raise ValueError("Groq API key is not configured")
+            # Initialize text scraper
+            await self.text_scraper.initialize()
             
-            self.llm = GroqChatModel(
-                api_key=config.get('api_key'),
-                model=config.get('model', "mixtral-8x7b-32768"),
-                temperature=config.get('temperature', 0.7)
-            )
-            logging.info(f"Successfully initialized Groq chat model with model: {config.get('model')}")
+            # Initialize memory system
+            await self.memory.initialize()
+            
+            # Set up any additional resources
+            self.conversation_history = []
+            self.last_interaction_time = None
+            self.active_research_tasks = set()
+            
+            self.initialized = True
+            logging.info("Chat agent initialized successfully")
+            
         except Exception as e:
-            logging.error(f"Failed to initialize Groq: {str(e)}")
+            logging.error(f"Failed to initialize chat agent: {str(e)}")
             raise
-            
-        self.doc_processor = DocumentProcessor()
-        self.memory = None  # Will be set in initialize()
-        
-        # Custom prompt template for the chatbot
-        self.system_prompt = config.get('system_prompt', """
-You are an advanced multi-modal AI assistant with superior cognitive abilities, domain expertise, and access to specialized tools and workflows. Your purpose is to assist users effectively while maintaining high standards of accuracy, ethics, and user experience.
 
-Core Capabilities:
-- Process and analyze: text, images, audio, and structured data
-- Access enterprise knowledge bases and documentation
-- Execute complex workflows and tool integrations
-- Maintain contextual awareness across conversations
-- Generate and edit various content formats
-
-Interaction Guidelines:
-1. Approach each task systematically:
-   - Analyze requirements thoroughly
-   - Break down complex tasks
-   - Select appropriate tools/workflows
-   - Execute with precision
-   - Verify results
-
-2. Knowledge Integration:
-   - Leverage provided context first
-   - Use tool-augmented search when needed
-   - Synthesize information effectively
-   - Cite sources when applicable
-   - Acknowledge knowledge boundaries
-
-3. Response Principles:
-   - Prioritize accuracy over speed
-   - Maintain appropriate detail level
-   - Structure information clearly
-   - Adapt tone to context
-   - Ensure actionable outputs
-
-4. Tool Utilization:
-   - Select optimal tools for tasks
-   - Execute workflows efficiently
-   - Handle errors gracefully
-   - Report results clearly
-   - Suggest workflow improvements
-
-5. Safety & Ethics:
-   - Maintain user privacy
-   - Follow security protocols
-   - Uphold ethical guidelines
-   - Flag sensitive requests
-   - Ensure responsible AI use
-
-When responding:
-- If uncertain, acknowledge limitations
-- If context is insufficient, request clarification
-- If task exceeds capabilities, explain why
-- If multiple approaches exist, outline options
-- If errors occur, provide clear explanations
-
-Remember: Your goal is to be maximally helpful while maintaining high standards of accuracy, ethics, and user experience across all interaction modalities.""")
-
-    def initialize(self, memory_manager: MemoryManager):
-        """Initialize the chat agent with memory manager.
-        
-        Args:
-            memory_manager: Memory manager instance to use for conversation history
-        """
-        self.memory = memory_manager
-        logging.info("Chat agent initialized with memory manager")
-
-    def cleanup(self):
+    async def cleanup(self):
         """Cleanup resources used by the chat agent."""
-        self.memory = None
-        logging.info("Chat agent cleanup completed")
-
-    def process_message(self, message: str) -> Dict[str, Any]:
-        """Process a user message and return a response.
-        
-        Args:
-            message: User's input message
-            
-        Returns:
-            Dict containing response and any source documents
-        """
         try:
-            # Get relevant documents from memory
-            relevant_docs = []
-            if self.memory and hasattr(self.memory, 'get_relevant_context'):
-                context = self.memory.get_relevant_context(message)
-                if context:
-                    relevant_docs = self.doc_processor.process_text(context)
+            # Clean up text scraper
+            if hasattr(self, 'text_scraper'):
+                await self.text_scraper.cleanup()
             
-            # Convert messages to LangChain format
-            messages = [
-                SystemMessage(content=self.system_prompt),
-            ]
+            # Clean up memory system
+            if hasattr(self, 'memory'):
+                await self.memory.cleanup()
             
-            # Add context if available
-            if relevant_docs:
-                context = "\n".join(doc.page_content for doc in relevant_docs)
-                messages.append(SystemMessage(content=f"Context:\n{context}"))
+            # Clear any active tasks or resources
+            self.conversation_history = []
+            self.active_research_tasks.clear()
+            self.initialized = False
             
-            # Add user message
-            messages.append(HumanMessage(content=message))
+            logging.info("Chat agent cleanup completed successfully")
             
-            # Generate response
-            response = self.llm._generate(messages)
+        except Exception as e:
+            logging.error(f"Error during chat agent cleanup: {str(e)}")
+            raise
+
+    async def process_message(self, message: str) -> Dict[str, Any]:
+        """Process a user message with enhanced capabilities."""
+        if not self.initialized:
+            raise RuntimeError("Chat agent not initialized. Call initialize() first.")
+
+        interaction_id = str(uuid.uuid4())
+        self.last_interaction_time = datetime.now()
+        
+        # Classify intent and get context
+        intent, confidence = await self._classify_intent(message)
+        
+        response_data = {
+            'interaction_id': interaction_id,
+            'intent': intent.value,
+            'confidence': confidence,
+            'context': self._last_context if hasattr(self, '_last_context') else {},
+            'sources': [],
+            'response': None,
+            'timestamp': self.last_interaction_time.isoformat()
+        }
+        
+        try:
+            # Determine if we need to perform research based on intent and confidence
+            if intent == QueryIntent.NEED_RESEARCH and confidence > 0.6:
+                sources = await self._perform_research(message)
+                response_data['sources'] = sources
+                
+            # Generate response using all available context
+            response = await self._generate_response(message, response_data)
+            response_data['response'] = response
             
-            return {
-                "response": response.generations[0].message.content,
-                "source_documents": relevant_docs
-            }
+            # Store interaction data
+            self.memory.store_query(
+                query=message,
+                intent=intent.value,
+                urls=response_data['sources'],
+                response=response
+            )
+            
+            # Add to conversation history
+            self.conversation_history.append({
+                'role': 'user',
+                'content': message,
+                'timestamp': self.last_interaction_time.isoformat()
+            })
+            self.conversation_history.append({
+                'role': 'assistant',
+                'content': response,
+                'timestamp': datetime.now().isoformat()
+            })
+            
+            return response_data
             
         except Exception as e:
             logging.error(f"Error processing message: {str(e)}")
-            return {
-                "response": "I apologize, but I encountered an error processing your message. "
-                           "This might be due to API limits or connectivity issues. "
-                           "Please try again later or contact support if the issue persists.",
-                "source_documents": []
+            error_response = {
+                **response_data,
+                'error': str(e),
+                'response': "I apologize, but I encountered an error processing your message. Please try again or rephrase your question."
             }
+            return error_response
+
+    def _setup_llm(self):
+        """Setup the language model."""
+        if not self.config.get('api_key'):
+            raise ValueError("API key is not configured")
+        
+        self.llm = GroqChatModel(
+            api_key=self.config.get('api_key'),
+            model=self.config.get('model', "mixtral-8x7b-32768"),
+            temperature=self.config.get('temperature', 0.7)
+        )
+        
+    def _setup_intent_classifier(self):
+        """Setup the intent classification system."""
+        # Initialize system prompts for different analysis tasks
+        self.intent_analysis_prompt = """You are an expert AI intent classifier. Your task is to analyze user messages and determine:
+1. The primary intent (GENERAL_CHAT, NEED_RESEARCH, NEED_UPDATE)
+2. The confidence level in your classification (0.0 to 1.0)
+3. The key context and entities that inform your decision
+
+For each message, provide a structured analysis in JSON format with the following fields:
+- intent: The primary intent category
+- confidence: Your confidence score (0.0 to 1.0)
+- context: Key contextual information and entities identified
+- reasoning: Brief explanation of your classification
+
+Intent Categories:
+- GENERAL_CHAT: General conversation, greetings, or simple questions
+- NEED_RESEARCH: Requires gathering or analyzing specific information
+- NEED_UPDATE: Requests for updates or changes to existing information
+
+Example Response:
+{
+    "intent": "NEED_RESEARCH",
+    "confidence": 0.95,
+    "context": {
+        "topic": "quantum computing",
+        "aspect": "recent developments",
+        "time_frame": "current"
+    },
+    "reasoning": "Query specifically asks about latest developments, indicating need for current research"
+}"""
+
+    async def _classify_intent(self, message: str) -> Tuple[QueryIntent, float]:
+        """Classify the intent of the user's message using advanced LLM reasoning."""
+        try:
+            # Prepare the analysis prompt
+            analysis_prompt = f"""Analyze the following user message:
+"{message}"
+
+Provide your analysis in the specified JSON format."""
+
+            messages = [
+                SystemMessage(content=self.intent_analysis_prompt),
+                HumanMessage(content=analysis_prompt)
+            ]
+
+            # Get LLM analysis
+            response = await self.llm._generate(messages)
+            response_text = response.generations[0].message.content
+
+            # Parse JSON response
+            try:
+                analysis = json.loads(response_text)
+                intent_str = analysis['intent']
+                confidence = float(analysis['confidence'])
+
+                # Store context for later use
+                self._last_context = {
+                    'context': analysis.get('context', {}),
+                    'reasoning': analysis.get('reasoning', ''),
+                    'timestamp': datetime.now().isoformat()
+                }
+
+                # Map string intent to enum
+                intent_map = {
+                    'GENERAL_CHAT': QueryIntent.GENERAL_CHAT,
+                    'NEED_RESEARCH': QueryIntent.NEED_RESEARCH,
+                    'NEED_UPDATE': QueryIntent.NEED_UPDATE
+                }
+                intent = intent_map.get(intent_str, QueryIntent.GENERAL_CHAT)
+
+                logging.info(f"Intent Analysis - Intent: {intent_str}, Confidence: {confidence}")
+                logging.debug(f"Context: {self._last_context}")
+
+                return intent, confidence
+
+            except json.JSONDecodeError:
+                logging.error(f"Failed to parse LLM response: {response_text}")
+                return QueryIntent.GENERAL_CHAT, 0.5
+
+        except Exception as e:
+            logging.error(f"Error in intent classification: {str(e)}")
+            return QueryIntent.GENERAL_CHAT, 0.5
+
+    async def _perform_research(self, query: str) -> List[str]:
+        """Perform targeted research based on the query."""
+        urls = await self.text_scraper.find_relevant_urls(query)
+        processed_urls = []
+        
+        for url in urls:
+            result = await self.text_scraper.process_url(url)
+            if result and result['quality_score'] > 0.7:
+                processed_urls.append(url)
+                # Add content to vector store
+                self.memory.add_documents([{
+                    'content': chunk,
+                    'metadata': {
+                        'url': url,
+                        'quality_score': result['quality_score'],
+                        **result['metadata']
+                    }
+                } for chunk in result['content']])
+                
+        return processed_urls
+        
+    async def _generate_response(self, message: str, response_data: Dict[str, Any]) -> str:
+        """Generate a response using all available context and LLM reasoning."""
+        try:
+            # Build comprehensive context
+            context_parts = []
+            
+            # Add intent analysis context
+            if 'context' in response_data:
+                context_parts.append("Intent Analysis:")
+                context_parts.append(f"- Intent: {response_data['intent']}")
+                context_parts.append(f"- Confidence: {response_data['confidence']}")
+                if 'reasoning' in response_data['context']:
+                    context_parts.append(f"- Reasoning: {response_data['context']['reasoning']}")
+
+            # Add relevant historical queries
+            similar_queries = self.memory.get_similar_queries(message)
+            if similar_queries:
+                context_parts.append("\nRelevant Previous Interactions:")
+                for query in similar_queries[:2]:
+                    context_parts.append(f"Q: {query['query']}\nA: {query['response']}")
+
+            # Add research sources
+            if response_data['sources']:
+                context_parts.append("\nRelevant Research Sources:")
+                for url in response_data['sources']:
+                    relevant_content = self.memory.get_relevant_context(message, url)
+                    if relevant_content:
+                        context_parts.append(f"From {url}:\n{relevant_content}")
+
+            # Prepare comprehensive prompt
+            system_prompt = """You are an intelligent AI assistant with access to:
+1. Understanding of the user's intent and context
+2. Relevant historical interactions
+3. Fresh research from reliable sources
+4. Domain expertise across various topics
+
+Your task is to provide a comprehensive, accurate, and helpful response that:
+- Directly addresses the user's query and intent
+- Incorporates relevant context and information
+- Cites sources when using researched information
+- Maintains a natural, conversational tone"""
+
+            prompt = f"""Context Information:
+{chr(10).join(context_parts)}
+
+User Question: {message}
+
+Please provide a comprehensive response that addresses the user's query while incorporating the available context and information."""
+
+            messages = [
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=prompt)
+            ]
+
+            # Generate response
+            response = await self.llm._generate(messages)
+            return response.generations[0].message.content
+
+        except Exception as e:
+            logging.error(f"Error generating response: {str(e)}")
+            return "I apologize, but I encountered an error while generating a response. Please try again or rephrase your question."
+
+    async def process_feedback(self, interaction_id: str, feedback: Dict[str, Any]):
+        """Process user feedback for continuous improvement."""
+        self.memory.store_feedback(interaction_id, feedback)
+        
+        # Update source relevance scores
+        if feedback.get('relevant_sources'):
+            for url in feedback['relevant_sources']:
+                await self.text_scraper.update_source_relevance(url, 1.0)
+        
+        # Handle negative feedback
+        if feedback.get('rating', 5) <= 3:
+            await self._handle_negative_feedback(feedback)
+            
+    async def _handle_negative_feedback(self, feedback: Dict[str, Any]):
+        """Handle negative feedback for system improvement."""
+        if feedback.get('missing_information'):
+            # Adjust scraping patterns
+            await self.text_scraper.adjust_scraping_patterns({
+                'missing_content': True
+            })
+        
+        if feedback.get('incorrect_metadata'):
+            await self.text_scraper.adjust_scraping_patterns({
+                'incorrect_metadata': True
+            })
+            
+        # Log feedback for analysis
+        logging.warning(f"Received negative feedback: {feedback}")

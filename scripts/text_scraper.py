@@ -8,7 +8,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Dict, List, Optional, Tuple, Set, Any
 from urllib.parse import urljoin, urlparse
 from dotenv import load_dotenv
 import aiohttp
@@ -57,6 +57,105 @@ class TextScraper:
         for dir_path in self.content_dirs.values():
             dir_path.mkdir(exist_ok=True)
             
+        # Initialize metadata selectors
+        self._metadata_selectors = {
+            'author': [
+                'meta[name="author"]',
+                'meta[property="article:author"]',
+                '.author-name',
+                '.byline'
+            ],
+            'date': [
+                'meta[name="published_time"]',
+                'meta[property="article:published_time"]',
+                'time[datetime]',
+                '.publish-date'
+            ],
+            'title': [
+                'meta[property="og:title"]',
+                'meta[name="twitter:title"]',
+                'h1.entry-title',
+                'h1.article-title'
+            ]
+        }
+        
+        # Initialize content selectors
+        self._content_selectors = [
+            'article',
+            'main',
+            '.content',
+            '#article-content',
+            '.post-content',
+            '.entry-content'
+        ]
+        
+    async def initialize(self):
+        """Initialize the text scraper."""
+        try:
+            # Initialize aiohttp session
+            self.aio_session = aiohttp.ClientSession()
+            
+            # Initialize cache directory
+            self.cache_dir = Path("./data/scraper_cache")
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Load any cached data
+            self.url_cache = {}
+            self.quality_scores = {}
+            self._load_cache()
+            
+            logging.info("Text scraper initialized successfully")
+            
+        except Exception as e:
+            logging.error(f"Failed to initialize text scraper: {str(e)}")
+            raise
+
+    async def cleanup(self):
+        """Cleanup resources."""
+        try:
+            if hasattr(self, 'aio_session') and self.aio_session and not self.aio_session.closed:
+                try:
+                    await asyncio.wait_for(self.aio_session.close(), timeout=2.0)
+                except asyncio.TimeoutError:
+                    logging.warning("Session cleanup timed out")
+                except Exception as e:
+                    logging.error(f"Error closing session: {str(e)}")
+            
+            # Save any pending cache updates
+            try:
+                await self._save_cache()
+            except Exception as e:
+                logging.error(f"Error saving cache during cleanup: {str(e)}")
+                
+            logging.info("Text scraper cleanup completed")
+            
+        except Exception as e:
+            logging.error(f"Error during text scraper cleanup: {str(e)}")
+            
+    def _load_cache(self):
+        """Load cached data from disk."""
+        try:
+            cache_file = self.cache_dir / "url_cache.json"
+            if cache_file.exists():
+                with open(cache_file, 'r') as f:
+                    cached_data = json.load(f)
+                    self.url_cache = cached_data.get('urls', {})
+                    self.quality_scores = cached_data.get('scores', {})
+        except Exception as e:
+            logging.warning(f"Failed to load scraper cache: {str(e)}")
+
+    async def _save_cache(self):
+        """Save cache to disk."""
+        try:
+            cache_file = self.cache_dir / "url_cache.json"
+            with open(cache_file, 'w') as f:
+                json.dump({
+                    'urls': self.url_cache,
+                    'scores': self.quality_scores
+                }, f)
+        except Exception as e:
+            logging.warning(f"Failed to save scraper cache: {str(e)}")
+
     def _is_text_content(self, url: str) -> bool:
         """Check if URL potentially contains text content."""
         text_indicators = [
@@ -450,6 +549,209 @@ date_scraped: {datetime.now().isoformat()}
         clean = re.sub(r'[^\w\s-]', '', text).strip().lower()
         return re.sub(r'[-\s]+', '-', clean)
 
+    async def find_relevant_urls(self, query: str, max_urls: int = 5) -> List[str]:
+        """Find relevant URLs for a given query."""
+        try:
+            # Initialize results
+            results = []
+            
+            # Use multiple search strategies
+            search_strategies = [
+                self._search_web,
+                self._search_cached_content,
+                self._search_predefined_sources
+            ]
+            
+            for strategy in search_strategies:
+                try:
+                    urls = await strategy(query, max_urls=max_urls)
+                    results.extend(urls)
+                    if len(results) >= max_urls:
+                        break
+                except Exception as e:
+                    logging.warning(f"Search strategy failed: {str(e)}")
+                    continue
+            
+            # Deduplicate and limit results
+            results = list(dict.fromkeys(results))[:max_urls]
+            
+            if not results:
+                logging.warning(f"No relevant URLs found for query: {query}")
+            
+            return results
+            
+        except Exception as e:
+            logging.error(f"Error finding relevant URLs: {str(e)}")
+            return []
+
+    async def _search_web(self, query: str, max_urls: int = 5) -> List[str]:
+        """Search the web for relevant content."""
+        try:
+            # Implement your preferred search method here
+            # For now, return an empty list as we haven't implemented the actual search
+            return []
+        except Exception as e:
+            logging.error(f"Web search failed: {str(e)}")
+            return []
+
+    async def _search_cached_content(self, query: str, max_urls: int = 5) -> List[str]:
+        """Search through cached content."""
+        try:
+            relevant_urls = []
+            for url, content in self.url_cache.items():
+                if any(term.lower() in content.lower() for term in query.split()):
+                    relevant_urls.append(url)
+                    if len(relevant_urls) >= max_urls:
+                        break
+            return relevant_urls
+        except Exception as e:
+            logging.error(f"Cache search failed: {str(e)}")
+            return []
+
+    async def _search_predefined_sources(self, query: str, max_urls: int = 5) -> List[str]:
+        """Search through predefined trusted sources."""
+        try:
+            # Add your predefined sources here
+            trusted_sources = [
+                "https://en.wikipedia.org/wiki/",
+                "https://docs.python.org/3/",
+                "https://developer.mozilla.org/en-US/docs/"
+            ]
+            
+            relevant_urls = []
+            for base_url in trusted_sources:
+                if len(relevant_urls) >= max_urls:
+                    break
+                try:
+                    search_url = f"{base_url}{query.replace(' ', '_')}"
+                    async with self.aio_session.head(search_url) as response:
+                        if response.status == 200:
+                            relevant_urls.append(search_url)
+                except:
+                    continue
+                    
+            return relevant_urls
+            
+        except Exception as e:
+            logging.error(f"Predefined source search failed: {str(e)}")
+            return []
+    
+    async def update_source_relevance(self, url: str, score: float):
+        """Update relevance score for a source."""
+        metadata_file = self.metadata_dir / f"{self._get_safe_filename(url)}.json"
+        if metadata_file.exists():
+            metadata = json.loads(metadata_file.read_text())
+            metadata['relevance_score'] = score
+            metadata['last_updated'] = datetime.now().isoformat()
+            metadata_file.write_text(json.dumps(metadata, indent=2))
+
+    async def adjust_scraping_patterns(self, feedback: Dict[str, Any]):
+        """Adjust scraping patterns based on feedback."""
+        if feedback.get('missing_content'):
+            self._update_content_patterns()
+        if feedback.get('incorrect_metadata'):
+            self._update_metadata_patterns()
+
+    def _update_content_patterns(self):
+        """Update content extraction patterns."""
+        new_selectors = [
+            'article',
+            'main',
+            '.content',
+            '#article-content',
+            '.post-content',
+            '.entry-content'
+        ]
+        for selector in new_selectors:
+            if selector not in self._content_selectors:
+                self._content_selectors.append(selector)
+
+    def _update_metadata_patterns(self):
+        """Update metadata extraction patterns."""
+        new_patterns = {
+            'author': [
+                'meta[name="author"]',
+                'meta[property="article:author"]',
+                '.author-name',
+                '.byline'
+            ],
+            'date': [
+                'meta[name="published_time"]',
+                'meta[property="article:published_time"]',
+                'time[datetime]',
+                '.publish-date'
+            ],
+            'title': [
+                'meta[property="og:title"]',
+                'meta[name="twitter:title"]',
+                'h1.entry-title',
+                'h1.article-title'
+            ]
+        }
+        for key, patterns in new_patterns.items():
+            if key not in self._metadata_selectors:
+                self._metadata_selectors[key] = []
+            self._metadata_selectors[key].extend(
+                [p for p in patterns if p not in self._metadata_selectors[key]]
+            )
+
+    def get_content_quality_score(self, content: str) -> float:
+        """Calculate a quality score for the scraped content."""
+        if not content:
+            return 0.0
+            
+        # Basic quality metrics
+        metrics = {
+            'length': len(content) / 1000,  # Normalized by 1000 chars
+            'sentence_count': len(content.split('. ')),
+            'word_count': len(content.split()),
+            'avg_word_length': sum(len(w) for w in content.split()) / len(content.split()) if content.split() else 0
+        }
+        
+        # Quality indicators
+        indicators = {
+            'has_punctuation': bool(re.search(r'[.,!?]', content)),
+            'has_paragraphs': content.count('\n\n') > 0,
+            'proper_capitalization': bool(re.search(r'[A-Z][a-z]', content)),
+            'no_excessive_spacing': not bool(re.search(r'\s{3,}', content))
+        }
+        
+        # Calculate final score (0.0 to 1.0)
+        base_score = min(1.0, (
+            metrics['length'] * 0.3 +
+            (metrics['sentence_count'] / 50) * 0.2 +
+            (metrics['word_count'] / 500) * 0.3 +
+            (metrics['avg_word_length'] / 10) * 0.2
+        ))
+        
+        # Apply penalties for failed indicators
+        penalty = sum(0.1 for indicator in indicators.values() if not indicator)
+        final_score = max(0.0, base_score - penalty)
+        
+        return final_score
+
+    async def process_url(self, url: str) -> Dict[str, Any]:
+        """Process a URL and return structured data with quality metrics."""
+        try:
+            content = await self.scrape_url(url)
+            if not content:
+                return None
+                
+            chunks = self.chunk_content(content)
+            quality_score = self.get_content_quality_score(content)
+            
+            return {
+                'url': url,
+                'content': chunks,
+                'quality_score': quality_score,
+                'metadata': self._extract_metadata(url),
+                'timestamp': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logging.error(f"Error processing URL {url}: {str(e)}")
+            return None
+
 async def main_async():
     """Main async function."""
     try:
@@ -465,7 +767,9 @@ async def main_async():
 
         logger.info(f"Starting to crawl: {url}")
         scraper = TextScraper()
+        await scraper.initialize()
         await scraper.crawl_nested_content(url)
+        await scraper.cleanup()
 
     except KeyboardInterrupt:
         logger.info("Scraping interrupted by user")
