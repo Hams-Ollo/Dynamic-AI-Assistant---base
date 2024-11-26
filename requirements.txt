@@ -1,24 +1,27 @@
 # Core dependencies
 python-dotenv>=1.0.1
 colorama>=0.4.4
+pydantic>=2.6.3
 
 # AI/ML Libraries
 groq>=0.4.0
-langchain>=0.1.0
-langchain-core>=0.1.40
+langchain>=0.1.9
+langchain-core>=0.1.27
 langchain-community>=0.0.24
-langchain-chroma>=0.1.4
-langchain-huggingface>=0.0.8
+langchain-groq>=0.0.1
+langchain-huggingface>=0.0.11
 transformers>=4.46.3
-sentence-transformers>=3.3.1
+sentence-transformers>=2.5.1
 redis-om>=0.2.1
+tiktoken>=0.6.0
 
 # Vector Store
-chromadb>=0.5.18
+chromadb>=0.4.24
 
 # Networking
-aiohttp>=3.8.0
+aiohttp>=3.9.3
 beautifulsoup4>=4.9.3
+python-multipart>=0.0.9
 
 # Frontend
 streamlit>=1.31.0
@@ -37,3 +40,9 @@ tqdm>=4.65.0
 requests>=2.31.0
 python-dateutil>=2.8.2
 fsspec>=2024.10.0
+unstructured>=0.12.4
+pypdf>=4.1.0
+python-docx>=1.1.0
+markdown>=3.5.2
+redis>=5.0.2
+uuid>=1.30
