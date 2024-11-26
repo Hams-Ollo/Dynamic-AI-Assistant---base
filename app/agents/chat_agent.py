@@ -14,13 +14,15 @@
 #
 #-------------------------------------------------------------------------------------#
 #----------# IMPORTS  #----------#
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Tuple
 import logging
 import re
 from datetime import datetime
 import uuid
 from enum import Enum
 import json
+import asyncio
+from typing import Optional
 
 import groq
 from langchain.schema import AIMessage, HumanMessage, SystemMessage, BaseMessage, ChatResult, ChatGeneration
@@ -108,8 +110,10 @@ class ChatAgent:
         self.initialized = False
         logging.info("Chat agent created")
 
-    async def initialize(self):
+    async def initialize(self, memory_manager: Optional['MemoryManager'] = None):
         """Initialize the chat agent's components."""
+        if memory_manager:
+            self.memory = memory_manager
         try:
             # Initialize text scraper
             await self.text_scraper.initialize()

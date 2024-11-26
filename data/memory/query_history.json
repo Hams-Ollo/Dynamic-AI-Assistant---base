@@ -26,5 +26,12 @@
     "urls": [],
     "response": "Hello! It's great to have you here. How can I assist you today?",
     "timestamp": "2024-11-26T13:25:13.137970"
+  },
+  {
+    "query": "hello there. my name is Hans and my favorite color is Blue",
+    "intent": "general_chat",
+    "urls": [],
+    "response": "Hello Hans! It's nice to meet you. Blue is a beautiful color, often associated with calmness and tranquility. It's also the color of the sky and the ocean, which can evoke feelings of serenity and vastness. Do you have a particular reason for liking the color blue, or is it just a personal preference?",
+    "timestamp": "2024-11-26T16:26:49.124876"
   }
 ]

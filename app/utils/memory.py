@@ -4,7 +4,8 @@ Memory management for chat agents.
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 import logging
-from langchain.memory import ConversationBufferMemory
+from langchain_core.memory import BaseMemory
+from langchain_community.chat_message_histories import ChatMessageHistory, RedisChatMessageHistory
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 import json
@@ -113,43 +114,39 @@ class MemoryManager:
             # Initialize embeddings with a local model
             self.embeddings = HuggingFaceEmbeddings(
                 model_name="all-MiniLM-L6-v2",
-                model_kwargs={'device': 'cpu'}
+                model_kwargs={'device': 'cpu'},
+                encode_kwargs={'normalize_embeddings': True}
             )
             
-            # Initialize vector store
+            # Initialize vector store with collection name
             self.vector_store = Chroma(
                 persist_directory=str(self.memory_path),
-                embedding_function=self.embeddings
+                embedding_function=self.embeddings,
+                collection_name="chat_memory"
             )
             
-            self.memory = ConversationBufferMemory(
-                memory_key="chat_history",
-                return_messages=True
-            )
+            # Initialize conversation memory
+            self.memory = ChatMessageHistory()
+            self.message_history = self.memory
+            
         except Exception as e:
             logging.error(f"Failed to initialize vector memory: {str(e)}")
             raise
     
     def _init_buffer_memory(self):
-        """Initialize simple buffer memory."""
-        self.memory = ConversationBufferMemory(
-            memory_key="chat_history",
-            return_messages=True
-        )
+        """Initialize conversation memory using newer LangChain interface."""
+        self.message_history = ChatMessageHistory()
+        self.memory = {
+            'history': self.message_history,
+            'messages': []
+        }
     
     def _init_storage(self):
         """Initialize the memory storage system."""
         if self.memory_type == 'vector':
             self._init_vector_memory()
         else:
-            # Initialize conversation memory using newer LangChain interface
-            from langchain_core.memory import ConversationBufferMemory
-            
-            self.memory = ConversationBufferMemory(
-                return_messages=True,
-                output_key="output",
-                input_key="input"
-            )
+            self._init_buffer_memory()
                 
     def _save_json(self, path: Path, data: Any):
         """Save data to JSON file with error handling."""
