@@ -6,7 +6,7 @@ from pathlib import Path
 import logging
 from langchain_core.memory import BaseMemory
 from langchain_community.chat_message_histories import ChatMessageHistory, RedisChatMessageHistory
-from langchain_chroma import Chroma
+from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 import json
 from datetime import datetime
