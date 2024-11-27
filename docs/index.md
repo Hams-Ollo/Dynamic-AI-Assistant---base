@@ -1,6 +1,10 @@
-# Multi-Agent Chatbot Template Documentation
+# Dynamic AI Assistant Documentation
 
-Welcome to the documentation for the Multi-Agent Chatbot Template! This documentation will help you understand, set up, and extend the template for your own chatbot applications.
+Welcome to the Dynamic AI Assistant documentation! This comprehensive guide will help you understand, set up, and use our advanced AI assistant framework.
+
+## About
+
+The Dynamic AI Assistant is a sophisticated AI framework that combines the power of LLaMA 3 70B with RAG capabilities to create intelligent, context-aware applications. Built with modern AI technologies and best practices, it provides a robust foundation for developing advanced AI solutions.
 
 ## 📚 Documentation Sections
 
@@ -17,6 +21,12 @@ Welcome to the documentation for the Multi-Agent Chatbot Template! This document
 
 ## 🚀 Key Features
 
+- Advanced LLM Integration with LLaMA 3 70B
+- Robust RAG Implementation
+- Multi-Agent Architecture
+- Streamlit-based UI
+- Comprehensive Documentation
+- Modern Development Practices
 - **Modular Agent System**: Easily create and extend agents
 - **Document Processing**: Built-in support for handling various document types
 - **Memory Management**: Flexible memory systems with multiple backend options

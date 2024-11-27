@@ -1,24 +1,21 @@
-# Getting Started Guide
+# Getting Started with Dynamic AI Assistant
 
-This guide will help you get up and running with the Multi-Agent Chatbot Template quickly.
+This guide will help you set up and start using the Dynamic AI Assistant framework. Follow these steps to get your development environment ready and begin working with the AI assistant.
 
 ## Prerequisites
 
-Before you begin, ensure you have:
-
-- Python 3.8 or higher installed
-- pip (Python package manager)
-- Git installed
-- A Groq API key ([Get one here](https://groq.com))
-- Basic understanding of Python and async programming
+- Python 3.12 or higher
+- Git
+- A Groq API key
+- Basic understanding of Python and AI concepts
 
 ## Quick Start
 
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/yourusername/multi-agent-chatbot-template.git
-   cd multi-agent-chatbot-template
+   git clone https://github.com/Hams-Ollo/Dynamic-AI-Assistant-dev-base.git
+   cd Dynamic-AI-Assistant-dev-base
    ```
 
 2. **Set Up Virtual Environment**

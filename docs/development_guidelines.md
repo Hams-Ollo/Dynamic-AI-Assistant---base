@@ -1,6 +1,6 @@
 # Development Guidelines
 
-This guide outlines the best practices and standards for developing with the Multi-Agent Chatbot Template.
+This guide outlines the best practices and standards for developing with the Dynamic AI Assistant framework.
 
 ## Code Style and Standards
 

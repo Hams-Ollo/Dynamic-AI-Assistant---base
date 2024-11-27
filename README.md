@@ -1,6 +1,6 @@
-# 🤖 Multi-Agent RAG Chatbot Template
+# 🤖 Dynamic AI Assistant Development Base
 
-A customizable template for quickly deploying Retrieval-Augmented Generation (RAG) chatbots. Built with Groq's Mixtral LLM, LangChain, and Streamlit, this template provides a production-ready foundation that's easy to adapt for various use cases.
+A sophisticated, production-ready AI assistant framework built with LLaMA 3 70B (via Groq), LangChain, and Streamlit. This project provides a robust foundation for developing advanced AI applications with RAG capabilities and multi-modal interactions.
 
 ## 🌟 Key Features
 
@@ -14,7 +14,7 @@ A customizable template for quickly deploying Retrieval-Augmented Generation (RA
   - Automatic chunking and vectorization
   - Semantic search for relevant context
 - **Modern Tech Stack**:
-  - Groq Mixtral LLM for fast, accurate responses
+  - LLaMA 3 70B via Groq for state-of-the-art responses
   - LangChain for RAG and memory management
   - ChromaDB for vector storage
   - Streamlit for clean, responsive UI
@@ -28,11 +28,11 @@ A customizable template for quickly deploying Retrieval-Augmented Generation (RA
 
 ### Setup
 
-1. **Clone and customize the template:**
+1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/yourusername/multi-agent-rag-template.git
-   cd multi-agent-rag-template
+   git clone https://github.com/Hams-Ollo/Dynamic-AI-Assistant-dev-base.git
+   cd Dynamic-AI-Assistant-dev-base
    ```
 
 2. **Set up virtual environment:**
@@ -63,7 +63,7 @@ A customizable template for quickly deploying Retrieval-Augmented Generation (RA
 
    ```env
    GROQ_API_KEY=your_api_key_here
-   MODEL_NAME=mixtral-8x7b-32768
+   MODEL_NAME=llama-3-70b
    MODEL_TEMPERATURE=0.7
    ```
 
