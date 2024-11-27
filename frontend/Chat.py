@@ -107,7 +107,7 @@ def initialize_document_processor():
 
 def display_chat_interface():
     """Display the main chat interface."""
-    st.title("💬 AI Chat Assistant")
+    st.title("💬 Dynamic AI Chat Assistant")
     
     # Initialize session state
     if "messages" not in st.session_state:
