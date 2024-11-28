@@ -10,14 +10,14 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 def display_quick_guide():
     """Display the comprehensive guide."""
-    st.title("🌟 Welcome to hams_ollo_AI, our Dynamic Multi-Agent AI Assistant")
+    st.title("🌟 Welcome to hams_ollo_AI, Your Dynamic Multi-Agent AI Assistant")
     
     # Introduction with animated container
     with st.container():
         st.markdown("""
         ## 🎯 About This System
         
-        Welcome to hams_ollo_AI our Dynamic Multi-Agent AI Assistant! This intelligent system leverages multiple specialized AI agents 
+        Welcome to hams_ollo_AI, Your Dynamic Multi-Agent AI Assistant! This intelligent system leverages multiple specialized AI agents 
         working together to provide comprehensive assistance for your tasks. Each agent has specific expertise and 
         collaborates seamlessly to deliver the best possible results.
         """)
