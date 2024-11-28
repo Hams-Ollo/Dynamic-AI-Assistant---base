@@ -11,11 +11,16 @@ from langchain_community.document_loaders import (
     PyPDFLoader,
     TextLoader,
     UnstructuredWordDocumentLoader,
-    UnstructuredMarkdownLoader
+    UnstructuredMarkdownLoader,
+    UnstructuredPowerPointLoader,
+    CSVLoader,
+    Docx2txtLoader,
+    UnstructuredExcelLoader
 )
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
+import pandas as pd
 
 class DocumentProcessor:
     """Handles document processing, chunking, and vectorization."""
@@ -66,6 +71,13 @@ class DocumentProcessor:
     def process_document(self, file_path: str, file_name: str) -> Optional[str]:
         """Process a document and store it in the vector database."""
         try:
+            # Check for duplicate document
+            for doc_id, doc in self.documents.items():
+                if doc['name'] == file_name:
+                    # Delete existing document
+                    self.delete_document(doc_id)
+                    break
+            
             # Load document based on file type
             loader = self._get_document_loader(file_path)
             if not loader:
@@ -113,8 +125,14 @@ class DocumentProcessor:
         loaders = {
             '.pdf': PyPDFLoader,
             '.txt': TextLoader,
-            '.docx': UnstructuredWordDocumentLoader,
-            '.md': UnstructuredMarkdownLoader
+            '.docx': Docx2txtLoader,
+            '.doc': UnstructuredWordDocumentLoader,
+            '.md': UnstructuredMarkdownLoader,
+            '.ppt': UnstructuredPowerPointLoader,
+            '.pptx': UnstructuredPowerPointLoader,
+            '.xlsx': ExcelLoader,
+            '.xls': ExcelLoader,
+            '.csv': CSVLoader
         }
         
         loader_class = loaders.get(file_ext)
@@ -172,3 +190,25 @@ class DocumentProcessor:
         except Exception as e:
             logging.error(f"Error clearing documents: {str(e)}")
             raise
+
+class ExcelLoader:
+    """Custom loader for Excel files using pandas."""
+    
+    def __init__(self, file_path: str):
+        self.file_path = file_path
+    
+    def load(self) -> List[Any]:
+        """Load Excel file and convert to documents."""
+        from langchain.schema import Document
+        
+        df = pd.read_excel(self.file_path)
+        # Convert all columns to string and join them
+        text = "\n".join(
+            f"{col}:\n{df[col].astype(str).str.cat(sep=', ')}"
+            for col in df.columns
+        )
+        
+        return [Document(
+            page_content=text,
+            metadata={"source": self.file_path}
+        )]

@@ -27,15 +27,17 @@ def display_upload_interface():
     Upload your documents to enhance the chatbot's knowledge. Supported formats:
     - PDF (.pdf)
     - Text (.txt)
-    - Word (.docx)
+    - Word (.doc, .docx)
     - Markdown (.md)
+    - PowerPoint (.ppt, .pptx)
+    - Excel (.xls, .xlsx)
     """)
 
     # File uploader
     uploaded_files = st.file_uploader(
         "Choose files to upload",
         accept_multiple_files=True,
-        type=['pdf', 'txt', 'docx', 'md']
+        type=['pdf', 'txt', 'doc', 'docx', 'md', 'ppt', 'pptx', 'xls', 'xlsx']
     )
 
     if uploaded_files:
