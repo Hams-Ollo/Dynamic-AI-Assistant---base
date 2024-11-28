@@ -107,7 +107,7 @@ def initialize_document_processor():
 
 def display_chat_interface():
     """Display the main chat interface."""
-    st.title("💬 Dynamic AI Chat Assistant")
+    st.title("💬 hams_ollo_AI | Dynamic Multi-Agent AI Assistant")
     
     # Initialize session state
     if "messages" not in st.session_state:
@@ -178,7 +178,7 @@ def main():
     )
     
     # Set the app title in sidebar
-    st.sidebar.markdown("# 💬 AI Chat Agent")
+    st.sidebar.markdown("# 💬 hams_ollo_AI Chat Interface")
     
     # Display chat interface
     display_chat_interface()
