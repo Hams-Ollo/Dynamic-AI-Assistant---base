@@ -6,9 +6,9 @@ A sophisticated, production-ready AI assistant framework built with LLaMA 3 70B 
 
 - **Document-Enhanced Conversations**: RAG capabilities for context-aware responses
 - **Multi-Page Interface**:
-  - 💬 AI Chat Agent: Main conversation interface
-  - 🏠 Home: Quick start guide and features overview
-  - 📚 Document Upload: File management and processing
+  - 💬 AI Chat Agent: Main conversation interface with RAG capabilities
+  - 🏠 Home: Quick start guide, setup instructions, and application overview
+  - 📚 Document Upload: File management, processing, and search/filter functionality
 - **Document Processing**:
   - Support for PDF, TXT, DOCX, and MD files
   - Automatic chunking and vectorization
