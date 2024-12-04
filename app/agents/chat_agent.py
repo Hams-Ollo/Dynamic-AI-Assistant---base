@@ -9,8 +9,8 @@ from datetime import datetime, timedelta
 
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_groq import ChatGroq
-from langchain.chains import ConversationChain
-from langchain.memory import ConversationBufferMemory
+from langchain_core.runnables import RunnableWithMessageHistory
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from app.utils.memory import MemoryManager
 
@@ -23,6 +23,7 @@ class ChatAgent:
         self.memory_manager = None
         self.llm = None
         self.chain = None
+        self.message_history = []
         
         # Rate limiting parameters
         self.last_request_time = None
@@ -41,34 +42,60 @@ class ChatAgent:
         # Reset counter if cooldown period has passed
         if self.last_request_time and (current_time - self.last_request_time) > timedelta(seconds=self.cooldown_period):
             self.request_count = 0
+            self.last_request_time = None
+            return True
             
-        # Update last request time
-        self.last_request_time = current_time
-        
-        # Check if we're over the limit
+        # If we're in cooldown, calculate remaining time
         if self.request_count >= self.max_requests_per_hour:
+            if not self.last_request_time:
+                self.last_request_time = current_time
             wait_time = self.cooldown_period - (current_time - self.last_request_time).seconds
-            raise Exception(f"Rate limit exceeded. Please try again in {wait_time//60} minutes.")
-            
+            minutes = wait_time // 60
+            seconds = wait_time % 60
+            raise Exception(f"Rate limit exceeded. Please try again in {minutes} minutes and {seconds} seconds.")
+        
+        # Update request count and time
         self.request_count += 1
+        if not self.last_request_time:
+            self.last_request_time = current_time
+        
+        return True
     
     async def initialize(self, memory_manager: Optional[MemoryManager] = None):
         """Initialize the chat agent with optional memory manager."""
         try:
             self.memory_manager = memory_manager
             
-            # Initialize LLM
-            self.llm = ChatGroq(
-                temperature=0.7,
-                model_name="mixtral-8x7b-32768",
-                max_tokens=4096
-            )
+            # Reset rate limiting on initialization
+            self.last_request_time = None
+            self.request_count = 0
             
-            # Initialize conversation chain
-            self.chain = ConversationChain(
-                llm=self.llm,
-                memory=ConversationBufferMemory(),
-                verbose=True
+            # Initialize LLM with error handling
+            try:
+                self.llm = ChatGroq(
+                    temperature=0.7,
+                    model_name="mixtral-8x7b-32768",
+                    max_tokens=4096
+                )
+            except Exception as llm_error:
+                self.logger.error(f"Failed to initialize LLM: {str(llm_error)}")
+                raise Exception("Failed to initialize language model. Please check your API key and try again.") from llm_error
+            
+            # Initialize message history
+            self.message_history = []
+            
+            # Initialize the chain using the newer RunnableWithMessageHistory approach
+            prompt = ChatPromptTemplate.from_messages([
+                ("system", "You are a helpful AI assistant."),
+                MessagesPlaceholder(variable_name="history"),
+                ("human", "{input}")
+            ])
+            
+            self.chain = RunnableWithMessageHistory(
+                prompt | self.llm,
+                lambda session_id: self.message_history,
+                input_messages_key="input",
+                history_messages_key="history"
             )
             
             self.logger.info("Chat agent initialized successfully")
@@ -107,39 +134,21 @@ class ChatAgent:
                 raise ValueError("Chat agent not initialized")
             
             # Prepare context-enhanced prompt
-            context_str = ""
             if additional_context:
                 context_str = "\n\nRelevant context from documents:\n" + "\n---\n".join(additional_context)
+                full_message = f"{message}\n\n{context_str}"
+            else:
+                full_message = message
             
-            enhanced_prompt = f"""Please help me with the following:
-
-{message}
-
-{context_str}
-
-If you use information from the provided documents, please cite them in your response.
-"""
-            
-            # Get response from LLM
-            response = await asyncio.to_thread(
-                self.chain.predict,
-                input=enhanced_prompt
+            # Get response using the newer approach
+            response = await self.chain.ainvoke(
+                {"input": full_message},
+                config={"configurable": {"session_id": "default"}}
             )
             
-            # Extract sources if context was used
-            sources = []
-            if additional_context:
-                sources = [
-                    {
-                        "file_name": ctx.split("Document: ")[1].split("\n")[0],
-                        "excerpt": ctx.split("\n", 1)[1]
-                    }
-                    for ctx in additional_context
-                ]
-            
             return {
-                "response": response,
-                "sources": sources if sources else None
+                "response": response.content if hasattr(response, 'content') else str(response),
+                "sources": [{"content": ctx} for ctx in additional_context] if additional_context else None
             }
             
         except Exception as e:

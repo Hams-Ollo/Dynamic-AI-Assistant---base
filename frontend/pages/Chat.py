@@ -22,71 +22,65 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from app.agents.chat_agent import ChatAgent
 from app.utils.document_processor import DocumentProcessor
 
-def initialize_chat_system():
-    """Initialize the chat system components."""
-    if 'chat_agent' not in st.session_state:
-        print("Initializing AI Chat System...")
-        st.session_state.chat_agent = ChatAgent()
-        print("Chat system initialized successfully!")
-
 def process_message(agent: ChatAgent, message: str, doc_processor: Optional[DocumentProcessor] = None):
     """Process a message using the chat agent with document context."""
     print("\n=== Processing New Message ===")
     print(f"User Message: {message[:100]}...")  # Print first 100 chars of message
     
     try:
+        # Ensure agent is initialized
+        if not agent.chain:
+            raise ValueError("Chat agent not initialized")
+            
         # Get relevant document context if available
-        context = ""
+        context = []
         if doc_processor:
             try:
                 print("Retrieving document context...")
                 relevant_docs = doc_processor.get_relevant_chunks(message)
                 if relevant_docs:
                     print(f"Found {len(relevant_docs)} relevant document chunks")
-                    context = "\n\nRelevant context from documents:\n" + "\n---\n".join(
-                        f"Document: {doc['metadata']['file_name']}\n{doc['content']}" for doc in relevant_docs
-                    )
+                    context = [
+                        f"Document: {doc['metadata']['file_name']}\n{doc['content']}"
+                        for doc in relevant_docs
+                    ]
             except Exception as e:
                 print(f"Error retrieving document context: {str(e)}")
                 st.warning(f"Could not retrieve document context: {str(e)}")
         
-        # Get response from agent
+        # Process message with context
+        print("Sending request to ChatAgent...")
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         try:
-            with st.spinner("Thinking... This might take a moment."):
-                print("\nSending request to ChatAgent...")
-                response = agent.get_response(message + context if context else message)
-                if response:
-                    print("Successfully received response from ChatAgent")
-                    return response
-                print("Warning: Empty response received from ChatAgent")
-                return "I apologize, but I couldn't generate a response. Please try again."
-            
-        except Exception as e:
-            error_msg = str(e).lower()
-            print(f"\nError from ChatAgent: {error_msg}")
-            
-            if any(phrase in error_msg for phrase in ["rate limit", "resource exhausted"]):
-                error_container = st.error("⚠️ The AI service is currently at capacity.")
-                suggestion = st.info("""
-                    Suggestions:
-                    1. Wait a moment before trying again
-                    2. Try shorter messages
-                    3. Reduce the response length in settings
-                """)
-                return "I apologize, but I'm receiving too many requests right now. Please try again in a moment."
-            else:
-                st.error(f"Error: {str(e)}")
-                return "I encountered an error while processing your request. Please try again."
+            response = loop.run_until_complete(agent.process_message(message, context))
+            return response.get('response', 'I encountered an error while processing your request. Please try again.')
+        finally:
+            loop.close()
         
     except Exception as e:
-        print(f"\nUnexpected error in process_message: {str(e)}")
-        st.error(f"Error processing message: {str(e)}")
-        return None
+        print(f"\nError from ChatAgent: {str(e)}")
+        return f"I encountered an error while processing your request. Please try again.\n\nError: {str(e)}"
 
 def initialize_document_processor():
     """Initialize the document processor if not in session state."""
     if 'doc_processor' not in st.session_state:
         st.session_state.doc_processor = DocumentProcessor()
+
+def initialize_chat_system():
+    """Initialize the chat system components."""
+    if 'chat_agent' not in st.session_state:
+        print("Initializing AI Chat System...")
+        chat_agent = ChatAgent()
+        # Run async initialization in a new event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(chat_agent.initialize())
+            st.session_state.chat_agent = chat_agent
+            print("Chat system initialized successfully!")
+        finally:
+            loop.close()
 
 def display_chat_interface():
     """Display the main chat interface."""
@@ -130,6 +124,8 @@ def display_chat_interface():
         # Get AI response
         with st.chat_message("assistant"):
             print("\nProcessing message with ChatAgent...")
+            if not hasattr(st.session_state, 'chat_agent') or not st.session_state.chat_agent.chain:
+                initialize_chat_system()
             response = process_message(
                 st.session_state.chat_agent,
                 prompt,
@@ -139,64 +135,33 @@ def display_chat_interface():
                 print(f"Response received ({len(response)} chars)")
                 if "rate limit" in response.lower():
                     st.session_state.rate_limit_count += 1
-                    print(f"Rate limit detected - count increased to {st.session_state.rate_limit_count}")
+                    print(f"Rate limit count increased to {st.session_state.rate_limit_count}")
                 else:
                     st.session_state.rate_limit_count = max(0, st.session_state.rate_limit_count - 1)
                     print(f"Rate limit count decreased to {st.session_state.rate_limit_count}")
                 
                 st.markdown(response)
-                # Add assistant response to chat history
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 print("Chat history updated with new response")
 
-    # Sidebar controls
-    with st.sidebar:
-        st.subheader("Chat Controls")
-        
-        if st.button("Clear Chat History"):
-            print("\n=== Clearing Chat History ===")
-            st.session_state.messages = []
-            st.session_state.rate_limit_count = 0
-            print("Chat history and rate limit counter reset")
-            st.rerun()
-        
-        st.markdown("---")
-        
-        st.subheader("Chat Settings")
-        temperature = st.slider("Temperature", 0.0, 1.0, 0.7, 0.1, 
-                              help="Higher values make the output more random, lower values make it more focused")
-        max_tokens = st.slider("Max Response Length", 100, 8192, 1000, 100,
-                             help="Maximum number of tokens in the response")
-        
-        # Update chat parameters when sliders change
-        if "chat_agent" in st.session_state:
-            print("\nUpdating ChatAgent parameters...")
-            st.session_state.chat_agent.update_parameters(
-                temperature=temperature,
-                max_tokens=max_tokens
-            )
-            
-        # Display rate limit status
-        if st.session_state.get("rate_limit_count", 0) > 0:
-            st.markdown("---")
-            st.subheader("System Status")
-            st.warning(f"Rate Limit Status: {st.session_state.rate_limit_count}/4")
-
 def main():
     """Main Streamlit application."""
-    st.set_page_config(
-        page_title="DynamicAI Chat Assistant",
-        page_icon="💬",
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
-    
-    # Initialize components
-    initialize_chat_system()
-    initialize_document_processor()
-    
-    # Display interface
-    display_chat_interface()
+    try:
+        # Initialize systems
+        initialize_chat_system()
+        initialize_document_processor()
+        
+        # Display interface
+        display_chat_interface()
+        
+        # Update parameters periodically
+        print("\nUpdating ChatAgent parameters...")
+        if hasattr(st.session_state, 'chat_agent'):
+            st.session_state.chat_agent.update_parameters(temperature=0.7)
+            
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+        print(f"Error in main: {str(e)}")
 
 if __name__ == "__main__":
     main()
