@@ -190,6 +190,9 @@ tmp/
 /audio_scrapes
 /text_scrapes
 
+# Project specific
+data/documents/
+
 # Database files
 *.sqlite
 *.db
