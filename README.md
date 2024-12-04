@@ -53,25 +53,111 @@ A sophisticated, production-ready AI assistant framework built with LLaMA 3 70B 
    pip install -r requirements.txt
    ```
 
-4. **Configure environment:**
+4. **Environment setup:**
 
    ```bash
    cp .env.example .env
+   # Add your Groq API key to .env
    ```
 
-   Edit `.env` with your settings:
-
-   ```env
-   GROQ_API_KEY=your_api_key_here
-   MODEL_NAME=llama-3-70b
-   MODEL_TEMPERATURE=0.7
-   ```
-
-5. **Run the application:**
+5. **Running the Application:**
 
    ```bash
-   streamlit run frontend/Chat.py
+   # Start the application
+   python main.py
+   # Or using Streamlit
+   streamlit run frontend/Home.py
    ```
+
+6. **Access the application:**
+
+   Open your browser and go to `http://localhost:8501`
+
+7. **Stopping the Application:**
+
+   Use `Ctrl+C` in the terminal to stop the application.
+
+8. **Deactivate virtual environment:**
+
+   ```bash
+   deactivate
+   ```
+
+### Development Commands
+
+- **Update dependencies:**
+
+  ```bash
+  pip freeze > requirements.txt
+  ```
+
+- **Run with debug logging:**
+
+  ```bash
+  python main.py --log-level=debug
+  ```
+
+- **Clear Streamlit cache:**
+
+  ```bash
+  streamlit cache clear
+  ```
+
+### Git Quick Reference
+
+- **Initialize repository:**
+
+  ```bash
+  git init
+  ```
+
+- **Add files to staging:**
+
+  ```bash
+  git add .
+  ```
+
+- **Commit changes:**
+
+  ```bash
+  git commit -m "your message"
+  ```
+
+- **Create new branch:**
+
+  ```bash
+  git checkout -b branch-name
+  ```
+
+- **Switch branches:**
+
+  ```bash
+  git checkout branch-name
+  ```
+
+- **Push to remote:**
+
+  ```bash
+  git push -u origin branch-name
+  ```
+
+- **Pull latest changes:**
+
+  ```bash
+  git pull origin branch-name
+  ```
+
+- **Check status:**
+
+  ```bash
+  git status
+  ```
+
+- **View commit history:**
+
+  ```bash
+  git log
+  ```
 
 ## 🎯 Use Cases
 
