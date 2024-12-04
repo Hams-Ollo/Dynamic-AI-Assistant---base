@@ -4,6 +4,8 @@ Chat agent with RAG capabilities.
 from typing import Optional, Dict, Any, List
 import logging
 import asyncio
+import time
+from datetime import datetime, timedelta
 
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_groq import ChatGroq
@@ -22,9 +24,33 @@ class ChatAgent:
         self.llm = None
         self.chain = None
         
+        # Rate limiting parameters
+        self.last_request_time = None
+        self.request_count = 0
+        self.max_requests_per_hour = 100  # Adjust based on your API tier
+        self.cooldown_period = 3600  # 1 hour in seconds
+        
         # Configure logging
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
+    
+    def _check_rate_limit(self):
+        """Check if we're within rate limits."""
+        current_time = datetime.now()
+        
+        # Reset counter if cooldown period has passed
+        if self.last_request_time and (current_time - self.last_request_time) > timedelta(seconds=self.cooldown_period):
+            self.request_count = 0
+            
+        # Update last request time
+        self.last_request_time = current_time
+        
+        # Check if we're over the limit
+        if self.request_count >= self.max_requests_per_hour:
+            wait_time = self.cooldown_period - (current_time - self.last_request_time).seconds
+            raise Exception(f"Rate limit exceeded. Please try again in {wait_time//60} minutes.")
+            
+        self.request_count += 1
     
     async def initialize(self, memory_manager: Optional[MemoryManager] = None):
         """Initialize the chat agent with optional memory manager."""
@@ -125,3 +151,35 @@ If you use information from the provided documents, please cite them in your res
         if self.chain and hasattr(self.chain, 'memory'):
             self.chain.memory.clear()
             self.logger.info("Conversation context cleared")
+
+    def get_response(self, message: str) -> str:
+        """Synchronously get a response from the chat agent.
+        
+        Args:
+            message: The input message to process
+            
+        Returns:
+            str: The agent's response
+            
+        Raises:
+            ValueError: If chat agent is not initialized
+            Exception: If rate limit is exceeded
+        """
+        if not self.chain:
+            raise ValueError("Chat agent not initialized")
+            
+        # Check rate limits
+        self._check_rate_limit()
+        
+        try:
+            # Use the chain to get response
+            response = self.chain.predict(input=message)
+            return response
+        except Exception as e:
+            if "rate limit exceeded" in str(e).lower():
+                self.request_count = self.max_requests_per_hour  # Force cooldown
+                raise Exception("Rate limit exceeded. Please try again in about an hour.")
+            raise e
+
+if __name__ == "__main__":
+    pass
