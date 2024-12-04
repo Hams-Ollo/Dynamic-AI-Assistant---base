@@ -1,23 +1,27 @@
-# 🤖 hams_ollo AI | A Dynamic AI Assistant development base
+# 🤖 Dynamic AI Assistant Base
 
 A sophisticated, production-ready AI assistant framework built with LLaMA 3 70B (via Groq), LangChain, and Streamlit. This project provides a robust foundation for developing advanced AI applications with RAG capabilities and multi-modal interactions.
 
 ## 🌟 Key Features
 
-- **Document-Enhanced Conversations**: RAG capabilities for context-aware responses
-- **Multi-Page Interface**:
-  - 💬 AI Chat Agent: Main conversation interface with RAG capabilities
-  - 🏠 Home: Quick start guide, setup instructions, and application overview
-  - 📚 Document Upload: File management, processing, and search/filter functionality
-- **Document Processing**:
-  - Support for PDF, TXT, DOCX, and MD files
-  - Automatic chunking and vectorization
-  - Semantic search for relevant context
-- **Modern Tech Stack**:
-  - LLaMA 3 70B via Groq for state-of-the-art responses
-  - LangChain for RAG and memory management
-  - ChromaDB for vector storage
-  - Streamlit for clean, responsive UI
+- **Advanced Chat Interface**:
+  - 💬 Context-aware conversations using RAG
+  - 🧠 Intelligent response generation
+  - 📝 Chat history management
+  - 🔍 Semantic search capabilities
+
+- **Document Management**:
+  - 📄 Support for multiple formats (PDF, TXT, DOCX, MD)
+  - 🔄 Advanced document processing and vectorization
+  - 🏷️ Document tagging and categorization
+  - 🔎 Full-text and semantic search
+
+- **Modern Architecture**:
+  - 🚀 LLaMA 3 70B via Groq for state-of-the-art responses
+  - 🔗 LangChain for RAG and memory management
+  - 💾 ChromaDB for efficient vector storage
+  - 🎯 Streamlit for responsive UI
+  - ⚙️ Unified configuration management
 
 ## 🚀 Quick Start
 
@@ -29,14 +33,12 @@ A sophisticated, production-ready AI assistant framework built with LLaMA 3 70B 
 ### Setup
 
 1. **Clone the repository:**
-
    ```bash
-   git clone https://github.com/Hams-Ollo/Dynamic-AI-Assistant-dev-base.git
-   cd Dynamic-AI-Assistant-dev-base
+   git clone [your-repository-url]
+   cd Dynamic-AI-Assistant-base
    ```
 
 2. **Set up virtual environment:**
-
    ```bash
    python -m venv venv
    
@@ -48,158 +50,94 @@ A sophisticated, production-ready AI assistant framework built with LLaMA 3 70B 
    ```
 
 3. **Install dependencies:**
-
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Environment setup:**
-
+4. **Configure environment:**
    ```bash
    cp .env.example .env
-   # Add your Groq API key to .env
+   # Add your Groq API key and other settings to .env
    ```
 
-5. **Running the Application:**
-
+5. **Start the application:**
    ```bash
-   # Start the application
-   python main.py
-   # Or using Streamlit
    streamlit run frontend/Home.py
    ```
 
-6. **Access the application:**
+## 📁 Project Structure
 
-   Open your browser and go to `http://localhost:8501`
+```
+Dynamic-AI-Assistant-base/
+├── app/
+│   ├── agents/
+│   │   └── chat_agent.py        # Core chat and RAG functionality
+│   ├── utils/
+│   │   ├── config.py           # Unified configuration management
+│   │   ├── document_processor.py # Document handling
+│   │   └── memory.py           # Memory management
+│   └── core/                   # Core application components
+├── frontend/
+│   ├── Home.py                 # Main entry point
+│   └── pages/
+│       ├── Chat.py             # Chat interface
+│       └── Document_Upload.py   # Document management
+├── data/                       # Data storage
+│   └── memory/                 # Vector store and memory
+├── docs/                       # Documentation
+└── tests/                      # Test suite
+```
 
-7. **Stopping the Application:**
+## ⚙️ Configuration
 
-   Use `Ctrl+C` in the terminal to stop the application.
+The application uses a unified configuration system (`app/utils/config.py`) that manages:
 
-8. **Deactivate virtual environment:**
+- Model settings (temperature, tokens, etc.)
+- API configurations
+- Memory management
+- Document processing parameters
+- Path management
 
-   ```bash
-   deactivate
-   ```
-
-### Development Commands
-
-- **Update dependencies:**
-
-  ```bash
-  pip freeze > requirements.txt
-  ```
-
-- **Run with debug logging:**
-
-  ```bash
-  python main.py --log-level=debug
-  ```
-
-- **Clear Streamlit cache:**
-
-  ```bash
-  streamlit cache clear
-  ```
-
-### Git Quick Reference
-
-- **Initialize repository:**
-
-  ```bash
-  git init
-  ```
-
-- **Add files to staging:**
-
-  ```bash
-  git add .
-  ```
-
-- **Commit changes:**
-
-  ```bash
-  git commit -m "your message"
-  ```
-
-- **Create new branch:**
-
-  ```bash
-  git checkout -b branch-name
-  ```
-
-- **Switch branches:**
-
-  ```bash
-  git checkout branch-name
-  ```
-
-- **Push to remote:**
-
-  ```bash
-  git push -u origin branch-name
-  ```
-
-- **Pull latest changes:**
-
-  ```bash
-  git pull origin branch-name
-  ```
-
-- **Check status:**
-
-  ```bash
-  git status
-  ```
-
-- **View commit history:**
-
-  ```bash
-  git log
-  ```
+Configuration can be customized through:
+1. Environment variables
+2. `.env` file
+3. Runtime configuration
 
 ## 🎯 Use Cases
 
-- **Documentation Assistant**: Upload technical docs for instant expert support
-- **Knowledge Base**: Create a smart FAQ system from your content
-- **Research Helper**: Process and query academic papers or research documents
-- **Legal Assistant**: Analyze and query legal documents and contracts
-- **Training Material**: Create interactive learning systems from training content
+- **Research Assistant**: Process and analyze academic papers
+- **Documentation Helper**: Quick access to technical documentation
+- **Knowledge Base**: Create smart FAQ systems
+- **Legal Assistant**: Analyze legal documents
+- **Training Support**: Process training materials
 
 ## 🔧 Customization
 
-The template is designed for easy customization:
+Key customization points:
 
-1. **Document Processing**: Adjust chunking and embedding in `document_processor.py`
-2. **Chat Behavior**: Modify prompts and logic in `chat_agent.py`
-3. **UI/UX**: Customize the interface in the frontend Streamlit files
-4. **Vector Storage**: Configure or swap ChromaDB settings as needed
+1. **Document Processing**: 
+   - Adjust chunking in `document_processor.py`
+   - Configure embedding models
+   - Modify vector store settings
 
-## 📚 Project Structure
+2. **Chat Behavior**:
+   - Update prompts in `chat_agent.py`
+   - Customize RAG integration
+   - Adjust memory management
 
-```curl
-├── app/
-│   ├── agents/
-│   │   └── chat_agent.py      # Core chat logic and RAG integration
-│   └── utils/
-│       └── document_processor.py  # Document handling and vectorization
-├── frontend/
-│   ├── Chat.py               # Main chat interface
-│   └── pages/
-│       ├── 0_🏠_Home.py      # Home page and documentation
-│       └── 1_📚_Document_Upload.py  # Document management
-└── requirements.txt          # Project dependencies
-```
+3. **User Interface**:
+   - Modify Streamlit components
+   - Add new pages
+   - Customize styling
 
 ## 🤝 Contributing
 
-Contributions are welcome! Feel free to:
+We welcome contributions! Please:
 
-- Fork the repository
-- Create a feature branch
-- Submit a pull request
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+[Your License] - See LICENSE file for details
