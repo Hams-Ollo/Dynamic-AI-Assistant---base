@@ -187,11 +187,11 @@ static/
 uploads/
 .temp/
 tmp/
-/audio_scrapes
-/text_scrapes
 
 # Project specific
 data/documents/
+data/audio_scrapes/
+data/text_scrapes/
 
 # Database files
 *.sqlite
