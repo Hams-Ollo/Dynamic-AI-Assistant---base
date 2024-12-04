@@ -1,4 +1,4 @@
-# 🤖 Dynamic AI Assistant Development Base
+# 🤖 hams_ollo AI | A Dynamic AI Assistant development base
 
 A sophisticated, production-ready AI assistant framework built with LLaMA 3 70B (via Groq), LangChain, and Streamlit. This project provides a robust foundation for developing advanced AI applications with RAG capabilities and multi-modal interactions.
 

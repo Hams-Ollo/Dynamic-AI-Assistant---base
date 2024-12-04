@@ -1,0 +1,130 @@
+Project: Multi-Agent System with LangGraph, Groq, and Streamlit
+
+OBJECTIVE:
+Create a modern, efficient multi-agent system leveraging LangGraph for agent orchestration, Groq for fast inference, and Streamlit for an interactive user interface. The system should demonstrate advanced agent collaboration patterns while maintaining high performance and user-friendly interaction.
+
+KEY COMPONENTS & REQUIREMENTS:
+
+1. Technology Stack:
+   - LangGraph for agent orchestration and workflow management
+   - Groq API for fast LLM inference
+   - Streamlit for frontend development
+   - Python 3.9+ for backend implementation
+   - Environment management with Poetry or requirements.txt
+
+2. Core Features:
+   a) Agent System Architecture:
+      - Implement multiple specialized agents using LangGraph's state machines
+      - Define clear agent roles (e.g., Planner, Executor, Critic)
+      - Create state-based workflow transitions
+      - Implement agent communication protocols
+      
+   b) Groq Integration:
+      - Set up Groq API client for fast inference
+      - Implement model selection and configuration
+      - Optimize prompt templates for Groq's models
+      - Handle API rate limiting and error cases
+      
+   c) Streamlit Interface:
+      - Create an intuitive chat interface
+      - Display agent interactions and thinking processes
+      - Implement real-time updates of agent activities
+      - Add visualization of agent state transitions
+      
+   d) System Components:
+      - Implement message history tracking
+      - Create agent state management system
+      - Design error handling and recovery mechanisms
+      - Add logging and monitoring capabilities
+
+3. Implementation Steps:
+
+   Phase 1: Setup & Infrastructure
+   - Initialize project structure
+   - Set up dependency management
+   - Configure Groq API credentials
+   - Create basic Streamlit application shell
+
+   Phase 2: Core Agent Framework
+   - Implement LangGraph state machines
+   - Define agent roles and responsibilities
+   - Create base agent classes
+   - Set up agent communication patterns
+
+   Phase 3: Groq Integration
+   - Implement Groq client wrapper
+   - Create prompt management system
+   - Set up model configuration
+   - Implement inference optimization
+
+   Phase 4: User Interface
+   - Design main chat interface
+   - Create agent visualization components
+   - Implement real-time updates
+   - Add debug/monitoring views
+
+   Phase 5: Testing & Optimization
+   - Implement unit tests
+   - Add integration tests
+   - Optimize performance
+   - Add monitoring and logging
+
+4. Expected Directory Structure:
+```
+project_root/
+├── pyproject.toml
+├── README.md
+├── .env
+├── src/
+│   ├── agents/
+│   │   ├── base.py
+│   │   ├── planner.py
+│   │   ├── executor.py
+│   │   └── critic.py
+│   ├── graphs/
+│   │   ├── workflows.py
+│   │   └── states.py
+│   ├── models/
+│   │   ├── groq_client.py
+│   │   └── prompt_templates.py
+│   ├── frontend/
+│   │   ├── main.py
+│   │   ├── components/
+│   │   └── pages/
+│   └── utils/
+│       ├── logger.py
+│       └── config.py
+├── tests/
+│   ├── unit/
+│   └── integration/
+└── docs/
+    ├── setup.md
+    └── api.md
+```
+
+5. Quality Requirements:
+   - Comprehensive documentation
+   - Type hints throughout the codebase
+   - Error handling for all external services
+   - Logging for debugging and monitoring
+   - Clean code following PEP 8 standards
+   - Unit tests with >80% coverage
+
+6. Advanced Features to Consider:
+   - Parallel agent execution capabilities
+   - Dynamic agent creation based on needs
+   - Custom LangGraph nodes for specialized tasks
+   - Performance monitoring dashboard
+   - Agent memory persistence
+   - Advanced error recovery strategies
+
+7. Development Guidelines:
+   - Use async/await for concurrent operations
+   - Implement proper error boundaries
+   - Follow SOLID principles
+   - Create reusable components
+   - Document all public interfaces
+   - Add comprehensive logging
+   - Implement proper security measures
+
+This prompt serves as a comprehensive guide for developing a sophisticated multi-agent system using modern tools and frameworks. The implementation should focus on maintainability, scalability, and user experience while leveraging the strengths of LangGraph for agent orchestration, Groq for fast inference, and Streamlit for an interactive interface.

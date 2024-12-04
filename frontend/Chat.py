@@ -5,7 +5,7 @@
 # Version: 0.0.3
 # Last Updated: [2024-11-21]
 #-------------------------------------------------------------------------------------#
-# SETUP GUIDE:  streamlit run .\frontend\Chat.py 
+# SETUP GUIDE:  streamlit run frontend\Chat.py 
 #
 # Initial Setup:
 # 1. Create virtual environment  -> python -m venv venv
@@ -107,7 +107,7 @@ def initialize_document_processor():
 
 def display_chat_interface():
     """Display the main chat interface."""
-    st.title("💬 hams_ollo_AI | Dynamic Multi-Agent AI Assistant")
+    st.title("💬 Dynamic AI Chat Assistant")
     
     # Initialize session state
     if "messages" not in st.session_state:
@@ -178,7 +178,7 @@ def main():
     )
     
     # Set the app title in sidebar
-    st.sidebar.markdown("# 💬 hams_ollo_AI Chat Interface")
+    st.sidebar.markdown("# 💬 AI Chat Agent")
     
     # Display chat interface
     display_chat_interface()

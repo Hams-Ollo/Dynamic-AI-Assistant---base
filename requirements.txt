@@ -1,81 +1,89 @@
 # Core dependencies
-python-dotenv>=1.0.1
-colorama>=0.4.4
-pydantic>=2.6.3
-typing-extensions>=4.9.0
+absl-py==2.1.0
+aiohttp==3.10.10
+aiosignal==1.3.1
+attrs==24.2.0
+colorama==0.4.6
+fastapi==0.115.5
+filelock==3.16.1
+frozenlist==1.5.0
+h11==0.14.0
+httpcore==1.0.6
+httpx==0.27.2
+idna==3.10
+Jinja2==3.1.4
+jsonschema==4.23.0
+langchain==0.3.7
+langchain-community==0.3.5
+langchain-core==0.3.15
+MarkupSafe==3.0.2
+multidict==6.1.0
+numpy==1.26.0
+openai==1.54.2
+packaging==24.2
+pandas==2.2.3
+Pillow==10.4.0
+pip==24.0
+pydantic==2.9.2
+pydantic_core==2.23.4
+python-dateutil==2.8.2
+python-dotenv==1.0.1
+pytz==2024.2
+PyYAML==6.0.2
+referencing==0.35.1
+requests==2.32.3
+rpds-py==0.20.0
+six==1.16.0
+sniffio==1.3.1
+starlette==0.41.2
+streamlit==1.39.0
+tenacity==9.0.0
+toml==0.10.2
+toolz==0.12.1
+tornado==6.4
+typing_extensions==4.12.2
+tzdata==2024.2
+tzlocal==5.2
+urllib3==2.2.3
+uvicorn==0.32.0
+validators==0.22.0
+watchdog==5.0.3
+yarl==1.16.0
 
 # AI/ML Libraries
-groq>=0.4.0
-langchain>=0.1.9
-langchain-core>=0.1.27
-langchain-community>=0.0.24
-langchain-groq>=0.0.1
-langchain-huggingface>=0.0.11
-langchain-chroma>=0.0.10
-transformers>=4.46.3
-sentence-transformers>=2.5.1
-redis-om>=0.2.1
-tiktoken>=0.6.0
+langchain==0.3.7
+langchain-community==0.3.5
+langchain-core==0.3.15
+openai==1.54.2
 
-# Vector Store and Embeddings
+# Vector Store
 chromadb>=0.4.24
-faiss-cpu>=1.7.4
-
-# Document Processing
-unstructured>=0.12.4
-pypdf>=4.1.0
-python-docx>=1.1.0
-markdown>=3.5.2
-python-magic>=0.4.27
-python-magic-bin>=0.4.14; platform_system == 'Windows'
-tabulate>=0.9.0
-pdf2image>=1.16.3
-pdfminer.six>=20221105
-docx2txt>=0.8
-openpyxl>=3.1.2
-xlrd>=2.0.1
-python-pptx>=0.6.21
 
 # Networking
-aiohttp>=3.9.3
-beautifulsoup4>=4.9.3
+aiohttp==3.10.10
+beautifulsoup4==4.12.3
 python-multipart>=0.0.9
-requests>=2.31.0
-urllib3>=2.2.0
 
 # Frontend
-streamlit>=1.31.0
-streamlit-extras>=0.4.0
-streamlit-chat>=0.1.1
-Pillow>=10.4.0
-plotly>=5.18.0
+streamlit==1.39.0
+Pillow==10.4.0
 
 # Machine Learning
 torch>=2.0.0
 tensorflow>=2.18.0
 tf-keras>=2.18.0
-numpy>=1.26.0
-pandas>=1.3.0
+numpy==1.26.0
+pandas==2.2.3
 scikit-learn>=1.5.2
-
-# Data Management
-redis>=5.0.2
-sqlalchemy>=2.0.0
-pymongo>=4.6.0
 
 # Utilities
 tqdm>=4.65.0
-python-dateutil>=2.8.2
+requests==2.32.3
+python-dateutil==2.8.2
 fsspec>=2024.10.0
-PyYAML>=6.0.1
-ujson>=5.9.0
-python-jose[cryptography]>=3.3.0
+unstructured>=0.12.4
+pypdf>=4.1.0
+python-docx>=1.1.0
+markdown>=3.5.2
+redis>=5.0.2
 uuid>=1.30
-watchdog>=3.0.0
-
-# Development Tools
-black>=24.2.0
-isort>=5.13.0
-mypy>=1.8.0
-pytest>=8.0.0
-pytest-asyncio>=0.23.0

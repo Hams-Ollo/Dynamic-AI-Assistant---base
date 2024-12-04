@@ -190,12 +190,6 @@ tmp/
 /audio_scrapes
 /text_scrapes
 
-# Document storage and vector database
-data/documents/*
-!data/documents/.gitkeep
-data/documents/chroma.sqlite3
-data/documents/metadata/documents.json
-
 # Database files
 *.sqlite
 *.db
