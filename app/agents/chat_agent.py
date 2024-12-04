@@ -51,6 +51,25 @@ class ChatAgent:
             self.logger.error(f"Error initializing chat agent: {str(e)}")
             raise
     
+    def update_parameters(self, temperature: float = None, max_tokens: int = None):
+        """Update the LLM parameters.
+        
+        Args:
+            temperature: New temperature value for text generation
+            max_tokens: New maximum tokens for response generation
+        """
+        if not self.llm:
+            self.logger.warning("Cannot update parameters: LLM not initialized")
+            return
+            
+        if temperature is not None:
+            self.llm.temperature = temperature
+            
+        if max_tokens is not None:
+            self.llm.max_tokens = max_tokens
+            
+        self.logger.info(f"Updated LLM parameters: temperature={temperature}, max_tokens={max_tokens}")
+    
     async def process_message(
         self,
         message: str,
