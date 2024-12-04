@@ -42,7 +42,7 @@ class Config:
     @property
     def embedding_model(self):
         """Get the embedding model name"""
-        return os.getenv("EMBEDDING_MODEL", "openai")
+        return os.getenv("EMBEDDING_MODEL", "huggingface")
     
     @property
     def vector_store(self):

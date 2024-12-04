@@ -122,27 +122,36 @@ def document_management_ui():
     chunk_size = st.sidebar.slider("Chunk Size", 100, 1000, 500, 50)
     embedding_model = st.sidebar.selectbox(
         "Embedding Model",
-        ["OpenAI", "HuggingFace", "Custom"]
+        ["HuggingFace", "OpenAI", "Custom"],
+        index=0  # Set HuggingFace as default
     )
     temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.7, 0.1)
-    context_window = st.sidebar.slider("Context Window Size", 1000, 4000, 2000, 100)
+    context_window = st.sidebar.slider("Context Window Size", 1000, 8192, 2000, 100)
     vector_store = st.sidebar.selectbox(
         "Vector Store",
-        ["Pinecone", "Faiss", "Chroma"]
+        ["Chroma", "Pinecone", "Faiss"],
+        index=0  # Set Chroma as default
     )
     
     # Initialize session state for tags if not exists
     if 'document_tags' not in st.session_state:
         st.session_state.document_tags = {}
     
-    # Document Statistics Section
-    st.header("📊 Document Statistics")
-    docs_dir = "documents"  # Update this path as needed
-    if not os.path.exists(docs_dir):
-        os.makedirs(docs_dir)
+    # Document Manager Section with Search and Filter
+    st.header("📑 Document Manager")
     
-    stats = get_document_stats(docs_dir)
+    # Search and Filter Controls
+    col1, col2 = st.columns(2)
+    with col1:
+        search_term = st.text_input("Search documents", "")
+    with col2:
+        filter_category = st.multiselect(
+            "Filter by Category",
+            ["General", "Technical", "Legal", "Financial", "Other"]
+        )
     
+    # Document Statistics
+    stats = get_document_stats("documents")
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Total Documents", stats["total_docs"])
@@ -151,6 +160,36 @@ def document_management_ui():
     with col3:
         st.metric("File Types", len(stats["file_types"]))
     
+    # Document List
+    if stats["recent_uploads"]:
+        for doc in stats["recent_uploads"]:
+            if (not search_term or search_term.lower() in doc["name"].lower()) and \
+               (not filter_category or st.session_state.document_tags.get(doc["name"], {}).get("category") in filter_category):
+                
+                col1, col2, col3, col4, col5 = st.columns([3, 2, 2, 2, 1])
+                
+                with col1:
+                    st.write(f"📄 {doc['name']}")
+                with col2:
+                    st.write(humanize.naturalsize(doc["size"]))
+                with col3:
+                    st.write(doc["modified"].strftime("%Y-%m-%d %H:%M"))
+                with col4:
+                    if doc["name"] in st.session_state.document_tags:
+                        st.write(", ".join(st.session_state.document_tags[doc["name"]]["tags"]))
+                with col5:
+                    if st.button("🗑️", key=f"del_{doc['name']}"):
+                        try:
+                            os.remove(os.path.join("documents", doc["name"]))
+                            if doc["name"] in st.session_state.document_tags:
+                                del st.session_state.document_tags[doc["name"]]
+                            st.success(f"Deleted {doc['name']}")
+                            st.experimental_rerun()
+                        except Exception as e:
+                            st.error(f"Error deleting file: {str(e)}")
+    else:
+        st.info("No documents uploaded yet")
+
     # Document Upload Section
     st.header("📤 Document Upload")
     uploaded_files = st.file_uploader(
@@ -162,50 +201,6 @@ def document_management_ui():
     if uploaded_files:
         process_uploaded_files(uploaded_files)
 
-    # Document Management Section
-    st.header("📑 Document Management")
-    
-    # Search and Filter
-    col1, col2 = st.columns(2)
-    with col1:
-        search_term = st.text_input("Search documents", "")
-    with col2:
-        filter_category = st.multiselect(
-            "Filter by Category",
-            ["General", "Technical", "Legal", "Financial", "Other"]
-        )
-    
-    # Document List with Actions
-    st.subheader("Document List")
-    if stats["recent_uploads"]:
-        for doc in stats["recent_uploads"]:
-            if (not search_term or search_term.lower() in doc["name"].lower()) and \
-               (not filter_category or st.session_state.document_tags.get(doc["name"], {}).get("category") in filter_category):
-                
-                col1, col2, col3, col4, col5 = st.columns([3, 2, 2, 2, 1])
-                
-                with col1:
-                    st.write(doc["name"])
-                with col2:
-                    st.write(humanize.naturalsize(doc["size"]))
-                with col3:
-                    st.write(doc["modified"].strftime("%Y-%m-%d %H:%M"))
-                with col4:
-                    if doc["name"] in st.session_state.document_tags:
-                        st.write(", ".join(st.session_state.document_tags[doc["name"]]["tags"]))
-                with col5:
-                    if st.button("Delete", key=f"del_{doc['name']}"):
-                        try:
-                            os.remove(os.path.join(docs_dir, doc["name"]))
-                            if doc["name"] in st.session_state.document_tags:
-                                del st.session_state.document_tags[doc["name"]]
-                            st.success(f"Deleted {doc['name']}")
-                            st.experimental_rerun()
-                        except Exception as e:
-                            st.error(f"Error deleting file: {str(e)}")
-    else:
-        st.info("No documents uploaded yet")
-    
     # File Type Distribution
     if stats["file_types"]:
         st.subheader("File Type Distribution")
