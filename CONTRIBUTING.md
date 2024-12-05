@@ -3,7 +3,7 @@
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/Program_and_Chill.git`
+2. Clone your fork: `git clone https://github.com/Hams-Ollo/Dynamic-AI-Assistant-base.git`
 3. Create your feature branch: `git checkout -b feature/amazing-feature`
 4. Install dependencies: `make install`
 
@@ -16,6 +16,10 @@
 5. Commit your changes: `git commit -m "feat: add amazing feature"`
 6. Push to the branch: `git push origin feature/amazing-feature`
 7. Open a Pull Request
+
+## Development Setup
+
+Ensure you have the latest dependencies and configurations for the enhanced UI and document management features.
 
 ## Commit Message Guidelines
 
@@ -65,6 +69,7 @@ Closes #123
 - Maintain test coverage above 80%
 - Test edge cases
 - Write integration tests for API endpoints
+- Include tests for new UI components and document handling functionalities.
 
 ## Documentation
 

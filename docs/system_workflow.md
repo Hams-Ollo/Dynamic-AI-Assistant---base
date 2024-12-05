@@ -95,6 +95,10 @@ When a user enters a query through the command-line interface:
    - Temporary data is cleaned up
    - System state is maintained for next query
 
+## Updates in v1.1.0
+
+- **Model Configuration**: Ensure all settings reflect the latest version.
+
 ## Technical Components
 
 ### Key Classes and Their Roles

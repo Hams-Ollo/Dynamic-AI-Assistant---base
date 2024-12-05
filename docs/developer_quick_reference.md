@@ -251,3 +251,7 @@ streamlit run app.py --server.maxUploadSize=50
 # Enable authentication
 streamlit run app.py --server.enableCORS=false
 ```
+
+## New Features in v1.1.0
+
+- **Emoji-Enhanced Logging**: Improved traceability and debugging.

@@ -163,6 +163,11 @@ except DocumentProcessingError as e:
     return {"error": "Could not process document"}
 ```
 
+## New Practices in v1.1.0
+
+- **Logging**: Utilize emoji-enhanced logging for clarity.
+- **Error Handling**: Updated practices for improved diagnostics.
+
 ## Git Workflow
 
 ### 1. Branching Strategy

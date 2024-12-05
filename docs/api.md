@@ -121,6 +121,11 @@ const ws = new WebSocket('ws://localhost:8501/ws/agent');
 - Scoped permissions
 - API key management
 
+## Updates in v1.1.0
+
+- **New Endpoints**: Ensure all endpoints reflect the latest agent capabilities.
+- **Configuration**: Updated to include new logging and document management settings.
+
 ## Client Examples
 
 ### Python Client

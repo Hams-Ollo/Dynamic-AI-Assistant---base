@@ -218,6 +218,10 @@ pytest
    chmod 755 data/memory
    ```
 
+## Updates for v1.1.0
+
+- **Dependencies**: Ensure all new packages are installed.
+
 ## Next Steps
 
 1. Review the [Getting Started Guide](getting_started.md)

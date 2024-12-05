@@ -7,9 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.4.0] - 2024-03-20
+## [1.1.0] - 2024-12-05
+
+### Added
+
+- Revamped UI with emoji roles and improved layout.
+- Enhanced document management, including stash clearing.
+- Emoji-enhanced logging for better traceability.
 
 ### Changed
+
+- Updated README and documentation for new features.
+- Improved session state management for smoother user experience.
+
+## [0.4.0] - 2024-03-20
+
+### Changed (0.4.0)
 
 - Upgraded to LLaMA 3 70B model with 8K context window
 - Enhanced configuration system with robust env variable handling
@@ -17,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved error handling and logging
 - Project renamed to Dynamic AI Assistant
 
-### Added
+### Added (0.4.0)
 
 - Detailed system workflow documentation
 - Comprehensive system prompt

@@ -185,6 +185,11 @@ class StreamingAgent(BaseAgent):
             }
 ```
 
+## New Features in v1.1.0
+
+- **UI Enhancements**: Updated chat interface with emoji roles for improved user interaction.
+- **Document Management**: Enhanced capabilities including stash clearing and better processing.
+
 ## Best Practices
 
 ### 1. Error Handling

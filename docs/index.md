@@ -6,6 +6,10 @@ Welcome to the Dynamic AI Assistant documentation! This comprehensive guide will
 
 The Dynamic AI Assistant is a sophisticated AI framework that combines the power of LLaMA 3 70B with RAG capabilities to create intelligent, context-aware applications. Built with modern AI technologies and best practices, it provides a robust foundation for developing advanced AI solutions.
 
+## Recent Enhancements in v1.1.0
+
+- **UI Overhaul**: Improved layout and interaction.
+
 ## 📚 Documentation Sections
 
 ### Getting Started

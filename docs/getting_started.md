@@ -59,6 +59,10 @@ This guide will help you set up and start using the Dynamic AI Assistant framewo
    python main.py
    ```
 
+## New Setup Instructions
+
+- **Configuration**: Include new environment settings.
+
 ## Project Structure Overview
 
 ```curl

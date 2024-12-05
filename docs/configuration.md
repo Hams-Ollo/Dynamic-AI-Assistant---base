@@ -299,6 +299,11 @@ api_key = os.getenv("AGENT_API_KEY")
 }
 ```
 
+## New Configuration Options in v1.1.0
+
+- **Logging**: Emoji-enhanced logging for better traceability.
+- **Document Management**: New settings for stash clearing and processing.
+
 ## Best Practices
 
 ### 1. Environment Variables
@@ -419,4 +424,3 @@ def validate_config(config: dict) -> None:
         }
     }
 }
-```
