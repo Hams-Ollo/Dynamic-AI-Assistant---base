@@ -44,7 +44,7 @@ A sophisticated, production-ready AI assistant framework built with LLaMA 3 70B 
 1. **Clone the repository:**
 
    ```bash
-   git clone [your-repository-url]
+   git clone https://github.com/Hams-Ollo/Dynamic-AI-Assistant-base.git
    cd Dynamic-AI-Assistant-base
    ```
 
