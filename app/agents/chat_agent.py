@@ -16,6 +16,10 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from app.utils.memory import MemoryManager
 from app.utils.emoji_logger import EmojiLogger
 
+class ChatAgentError(Exception):
+    """Custom exception class for ChatAgent errors."""
+    pass
+
 class ChatMessageHistory(BaseChatMessageHistory):
     """Custom message history implementation."""
     
@@ -85,7 +89,7 @@ class ChatAgent:
             wait_time = self.cooldown_period - (current_time - self.last_request_time).seconds
             minutes = wait_time // 60
             seconds = wait_time % 60
-            raise Exception(f"Rate limit exceeded. Please try again in {minutes} minutes and {seconds} seconds.")
+            raise ChatAgentError(f"Rate limit exceeded. Please try again in {minutes} minutes and {seconds} seconds.")
         
         # Update request count and time
         self.request_count += 1
@@ -200,10 +204,13 @@ Remember: Engage naturally in conversation while providing clear but subtle docu
             
             self.logger.info(f"Response received ({len(str(response))} chars)")
             return response
-            
-        except Exception as e:
-            self.logger.error(f"Error from ChatAgent: {str(e)}")
+        
+        except ChatAgentError as e:
+            self.logger.error(f"ChatAgentError: {str(e)}")
             return {"error": str(e)}
+        except Exception as e:
+            self.logger.error(f"Unexpected error from ChatAgent: {str(e)}")
+            return {"error": "An unexpected error occurred. Please try again later."}
 
     async def get_response(self, message: str, document_context: List[str]) -> str:
         """
@@ -218,7 +225,7 @@ Remember: Engage naturally in conversation while providing clear but subtle docu
 
         Raises:
             ValueError: If chat agent is not initialized
-            Exception: If rate limit is exceeded
+            ChatAgentError: If rate limit is exceeded
         """
         try:
             if not self.chain:
@@ -259,11 +266,17 @@ Remember: Engage naturally in conversation while providing clear but subtle docu
                 return response_text
             except Exception as chain_error:
                 self.logger.error(f"Chain error: {str(chain_error)}")
-                raise chain_error
+                raise ChatAgentError("Failed to process the message chain.") from chain_error
 
+        except ValueError as ve:
+            self.logger.error(f"Initialization error in get_response: {str(ve)}")
+            raise ChatAgentError("Chat agent is not properly initialized.") from ve
+        except ChatAgentError as cae:
+            self.logger.error(f"ChatAgentError in get_response: {str(cae)}")
+            raise cae
         except Exception as e:
-            self.logger.error(f"Error in get_response: {str(e)}")
-            raise e
+            self.logger.error(f"Unexpected error in get_response: {str(e)}")
+            raise ChatAgentError("An unexpected error occurred during response generation.") from e
     
     async def clear_context(self):
         """Clear conversation context."""

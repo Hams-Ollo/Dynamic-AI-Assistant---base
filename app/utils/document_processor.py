@@ -60,8 +60,8 @@ class DocumentProcessor:
             with open(metadata_file, 'r') as f:
                 self.documents = json.load(f)
     
-    def _save_document_metadata(self):
-        """Save document metadata to storage."""
+    async def _save_document_metadata_async(self):
+        """Save document metadata to storage asynchronously."""
         metadata_file = self.documents_path / "documents.json"
         import json
         with open(metadata_file, 'w') as f:
@@ -88,8 +88,8 @@ class DocumentProcessor:
             self.initialize_vector_store()
             self._load_document_metadata()
 
-    def process_document(self, file_path: str, file_name: str) -> Optional[str]:
-        """Process a document and store it in the vector database."""
+    async def process_document(self, file_path: str, file_name: str) -> Optional[str]:
+        """Process a document and store it in the vector database asynchronously."""
         try:
             self.logger.document_process("Processing document...")
             # Load document based on file type
@@ -98,7 +98,7 @@ class DocumentProcessor:
                 raise ValueError(f"Unsupported file type: {file_path}")
             
             # Load and split document
-            doc = loader.load()
+            doc = await loader.load_async()  # Assuming the loader has an async method
             chunks = self.text_splitter.split_documents(doc)
             
             # Generate document ID
@@ -114,7 +114,7 @@ class DocumentProcessor:
                 })
             
             # Store in vector database
-            self.vector_store.add_documents(chunks)
+            await self.vector_store.add_documents_async(chunks)  # Assuming async method
             
             # Store document metadata
             self.documents[doc_id] = {
@@ -124,7 +124,7 @@ class DocumentProcessor:
                 "timestamp": datetime.now().isoformat(),
                 "num_chunks": len(chunks)
             }
-            self._save_document_metadata()
+            await self._save_document_metadata_async()  # Assuming async method
             
             return doc_id
             

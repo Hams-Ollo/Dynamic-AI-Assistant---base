@@ -10,6 +10,7 @@ import logging
 from typing import Any, Dict, Optional
 from pathlib import Path
 from dotenv import load_dotenv
+from app.utils.emoji_logger import EmojiLogger
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,12 @@ class EnvironmentManager:
         'MODEL_TEMPERATURE': float,
         'MODEL_MAX_TOKENS': int,
         'MEMORY_TYPE': str,
+        'VECTOR_STORE_DIR': str,
+        'LOG_LEVEL': str,
+        'LOG_FILE': str,
+        'ENABLE_REQUEST_VALIDATION': bool,
+        'MAX_REQUEST_SIZE_MB': int,
+        'REQUEST_TIMEOUT_SECONDS': int,
     }
 
     def __init__(self, env_file: Optional[str] = None):
@@ -94,7 +101,7 @@ class EnvironmentManager:
 
         if error_messages:
             error_message = "\n".join(error_messages)
-            logger.error(error_message)
+            EmojiLogger.error(error_message, category='validation')
             raise EnvironmentError(error_message)
 
     def get(self, key: str, default: Any = None) -> Any:
@@ -118,7 +125,7 @@ class EnvironmentManager:
                     return value.lower() in ('true', '1', 'yes', 'on')
                 return var_type(value)
             except ValueError:
-                logger.error(f"Error converting {key} to {var_type.__name__}")
+                EmojiLogger.error(f"Error converting {key} to {var_type.__name__}", category='validation')
                 return default
         
         return value
