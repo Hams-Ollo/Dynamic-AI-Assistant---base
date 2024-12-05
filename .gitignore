@@ -183,10 +183,7 @@ Thumbs.db
 logs/application.log
 
 # Data files
-data/documents/*.sqlite3
-data/documents/*.pickle
-data/documents/*.bin
-data/documents/*.json
+data/documents/
 data/vector_store/*.sqlite3
 
 # Local development
