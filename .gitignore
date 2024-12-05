@@ -202,3 +202,7 @@ data/text_scrapes/
 *.sqlite
 *.db
 *.sql
+
+# Vector Store Binaries
+*.bin
+data/vector_store/
