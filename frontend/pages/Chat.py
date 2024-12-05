@@ -15,6 +15,7 @@ import asyncio
 from typing import Optional, Dict, Any
 import streamlit as st
 import time
+from app.utils.emoji_logger import EmojiLogger
 
 # Add parent directory to path to import app modules
 sys.path.append(str(Path(__file__).parent.parent.parent))
@@ -33,8 +34,7 @@ def get_or_create_event_loop():
 
 def process_message(agent: ChatAgent, message: str, doc_processor: Optional[DocumentProcessor] = None):
     """Process a message using the chat agent with document context."""
-    print("\n=== Processing New Message ===")
-    print(f"User Message: {message[:100]}...")  # Print first 100 chars of message
+    EmojiLogger.log("info", f"User Message: {message[:100]}...")  # Log first 100 chars of message
     
     try:
         # Ensure agent is initialized
@@ -45,26 +45,28 @@ def process_message(agent: ChatAgent, message: str, doc_processor: Optional[Docu
         context = []
         if doc_processor:
             try:
-                print("Retrieving document context...")
+                EmojiLogger.log("info", "Retrieving document context...")
                 relevant_docs = doc_processor.get_relevant_chunks(message)
                 if relevant_docs:
-                    print(f"Found {len(relevant_docs)} relevant document chunks")
+                    EmojiLogger.log("info", f"Found {len(relevant_docs)} relevant document chunks")
                     context = [
                         f"Document: {doc['metadata']['file_name']}\n{doc['content']}"
                         for doc in relevant_docs
                     ]
             except Exception as e:
-                print(f"Error retrieving document context: {str(e)}")
+                EmojiLogger.log("error", f"Error retrieving document context: {str(e)}")
                 st.warning(f"Could not retrieve document context: {str(e)}")
         
         # Process message with context
-        print("Sending request to ChatAgent...")
+        EmojiLogger.log("info", "Sending request to ChatAgent...")
         loop = get_or_create_event_loop()
         response = loop.run_until_complete(agent.process_message(message, context))
+        if isinstance(response, str):
+            return response
         return response.get('response', 'I encountered an error while processing your request. Please try again.')
         
     except Exception as e:
-        print(f"\nError from ChatAgent: {str(e)}")
+        EmojiLogger.log("error", f"Error from ChatAgent: {str(e)}")
         return f"I encountered an error while processing your request. Please try again.\n\nError: {str(e)}"
 
 def initialize_document_processor():
@@ -75,29 +77,29 @@ def initialize_document_processor():
 def initialize_chat_system():
     """Initialize the chat system components."""
     if 'chat_agent' not in st.session_state:
-        print("Initializing AI Chat System...")
+        EmojiLogger.log("info", "Initializing AI Chat System...")
         chat_agent = ChatAgent()
         loop = get_or_create_event_loop()
         loop.run_until_complete(chat_agent.initialize())
         st.session_state.chat_agent = chat_agent
-        print("Chat system initialized successfully!")
+        EmojiLogger.log("info", "Chat system initialized successfully!")
 
 def display_chat_interface():
     """Display the main chat interface."""
-    print("\n=== Chat Interface Initialized ===")
+    EmojiLogger.log("info", "Chat Interface Initialized")
     
     st.title("💬 Dynamic AI Chat Assistant")
     
     # Initialize chat history if not exists
     if "messages" not in st.session_state:
         st.session_state.messages = []
-        print("Initialized new chat history")
+        EmojiLogger.log("info", "Initialized new chat history")
     
     # Initialize rate limit counter if not exists
     if "rate_limit_count" not in st.session_state:
         st.session_state.rate_limit_count = 0
         st.session_state.last_rate_limit = None
-        print("Initialized rate limit counter")
+        EmojiLogger.log("info", "Initialized rate limit counter")
 
     # Display chat history
     for message in st.session_state.messages:
@@ -110,11 +112,11 @@ def display_chat_interface():
         if time_since_limit > 60:  # Reset after 1 minute
             st.session_state.rate_limit_count = 0
             st.session_state.last_rate_limit = None
-            print("Rate limit counter reset")
+            EmojiLogger.log("info", "Rate limit counter reset")
 
     # Chat input
     if prompt := st.chat_input("What would you like to know?", disabled=st.session_state.get("rate_limit_count", 0) > 3):
-        print(f"\n=== New Chat Input ===\nUser: {prompt[:100]}...")
+        EmojiLogger.log("info", f"\n=== New Chat Input ===\nUser: {prompt[:100]}...")
         
         # Rate limit handling
         if st.session_state.get("rate_limit_count", 0) > 2:
@@ -122,16 +124,16 @@ def display_chat_interface():
             st.session_state.last_rate_limit = time.time()
             return
 
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
+        # Add user message to chat history 🏹🪶🦚📿🌺🐝🪶🍯 🪬 🔱 🤖 💡🤓🙈🌕🐍🥰🤯😭🔥🪴🍑🌊💧🦢🪈
+        st.session_state.messages.append({"role": "🪬", "content": prompt})
+        with st.chat_message("🪬"):
             st.markdown(prompt)
 
-        # Get AI response
-        with st.chat_message("assistant"):
-            print("\nProcessing message with ChatAgent...")
+        # Get AI response 🏹🪶🦚📿🌺🐝🪶🍯🪬🔱🤖💡🤓🙈🌕🐍🥰🤯😭🔥🪴🍑🌊💧🦢🪈
+        with st.chat_message("🤖"):
+            EmojiLogger.log("info", "\nProcessing message with ChatAgent...")
             message_placeholder = st.empty()
-            message_placeholder.markdown("🤔 Thinking...")
+            message_placeholder.markdown("🤖 Thinking...")
             
             try:
                 if not hasattr(st.session_state, 'chat_agent') or not st.session_state.chat_agent.chain:
@@ -144,22 +146,22 @@ def display_chat_interface():
                 )
                 
                 if response:
-                    print(f"Response received ({len(response)} chars)")
+                    EmojiLogger.log("info", f"Response received ({len(response)} chars)")
                     if "rate limit" in response.lower():
                         st.session_state.rate_limit_count += 1
                         st.session_state.last_rate_limit = time.time()
-                        print(f"Rate limit count increased to {st.session_state.rate_limit_count}")
+                        EmojiLogger.log("info", f"Rate limit count increased to {st.session_state.rate_limit_count}")
                     else:
                         st.session_state.rate_limit_count = max(0, st.session_state.rate_limit_count - 1)
-                        print(f"Rate limit count decreased to {st.session_state.rate_limit_count}")
+                        EmojiLogger.log("info", f"Rate limit count decreased to {st.session_state.rate_limit_count}")
                     
                     message_placeholder.markdown(response)
-                    st.session_state.messages.append({"role": "assistant", "content": response})
-                    print("Chat history updated with new response")
+                    st.session_state.messages.append({"role": "🤖", "content": response})
+                    EmojiLogger.log("info", "Chat history updated with new response")
                     
             except Exception as e:
                 message_placeholder.markdown(f"❌ Error: {str(e)}")
-                print(f"Error processing message: {str(e)}")
+                EmojiLogger.log("error", f"Error processing message: {str(e)}")
 
 def main():
     """Main Streamlit application."""
@@ -172,13 +174,13 @@ def main():
         display_chat_interface()
         
         # Update parameters periodically
-        print("\nUpdating ChatAgent parameters...")
+        EmojiLogger.log("info", "\nUpdating ChatAgent parameters...")
         if hasattr(st.session_state, 'chat_agent'):
             st.session_state.chat_agent.update_parameters(temperature=0.7)
             
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
-        print(f"Error in main: {str(e)}")
+        EmojiLogger.log("error", f"Error in main: {str(e)}")
 
 if __name__ == "__main__":
     main()

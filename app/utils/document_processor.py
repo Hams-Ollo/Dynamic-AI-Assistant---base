@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime
 import logging
 from pathlib import Path
+from app.utils.emoji_logger import EmojiLogger
 
 from langchain_community.document_loaders import (
     PyPDFLoader,
@@ -14,7 +15,7 @@ from langchain_community.document_loaders import (
     UnstructuredMarkdownLoader
 )
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 
 class DocumentProcessor:
@@ -31,6 +32,9 @@ class DocumentProcessor:
         self.vector_store_type = self.config.get("vector_store_type", "chroma")
         if not hasattr(self, 'vector_store_type'):
             raise AttributeError("DocumentProcessor must have a 'vector_store_type' attribute")
+        
+        self.logger = EmojiLogger
+        self.logger.startup("Document processor initialized.")
         
         self.initialize_vector_store()
         
@@ -64,15 +68,18 @@ class DocumentProcessor:
             json.dump(self.documents, f)
     
     def initialize_vector_store(self):
-        """Initialize or reinitialize the vector store."""
-        if self.vector_store_type == "chroma":
-            self.vector_store = Chroma(
-                collection_name="uploaded_documents",
-                embedding_function=self.embeddings,
-                persist_directory=str(Path("data/documents"))
-            )
-        else:
-            raise ValueError(f"Unsupported vector store type: {self.vector_store_type}")
+        """Initialize the vector store based on configuration."""
+        try:
+            if self.vector_store_type == "chroma":
+                self.vector_store = Chroma(
+                    persist_directory="data/vector_store",
+                    embedding_function=self.embeddings
+                )
+                self.logger.success("Vector store initialized.")
+            else:
+                raise ValueError("Unsupported vector store type.")
+        except Exception as e:
+            self.logger.error(f"Error initializing vector store: {str(e)}")
 
     def set_vector_store(self, store_type: str):
         """Change the vector store type and reinitialize."""
@@ -84,6 +91,7 @@ class DocumentProcessor:
     def process_document(self, file_path: str, file_name: str) -> Optional[str]:
         """Process a document and store it in the vector database."""
         try:
+            self.logger.document_process("Processing document...")
             # Load document based on file type
             loader = self._get_document_loader(file_path)
             if not loader:
