@@ -185,6 +185,7 @@ logs/application.log
 # Data files
 data/documents/
 data/vector_store/*.sqlite3
+data\documents
 
 # Local development
 media/
