@@ -109,7 +109,7 @@ def set_custom_style():
 def display_welcome():
     st.markdown("""
         <div class="main-header">
-            <h1>🤖 Dynamic AI Assistant</h1>
+            <h1>🤖 hams_ollo | Dynamic AI Assistant</h1>
             <p style='font-size: 1.2rem;'>Your intelligent companion for document analysis and natural conversation</p>
         </div>
     """, unsafe_allow_html=True)
