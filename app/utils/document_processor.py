@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime
 import logging
 from pathlib import Path
+from app.utils.emoji_logger import EmojiLogger
 
 from langchain_community.document_loaders import (
     PyPDFLoader,
@@ -14,7 +15,7 @@ from langchain_community.document_loaders import (
     UnstructuredMarkdownLoader
 )
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 
 class DocumentProcessor:
@@ -27,12 +28,15 @@ class DocumentProcessor:
             model_name="all-MiniLM-L6-v2"
         )
         
-        # Initialize vector store
-        self.vector_store = Chroma(
-            collection_name="uploaded_documents",
-            embedding_function=self.embeddings,
-            persist_directory=str(Path("data/documents"))
-        )
+        # Ensure vector_store_type is set
+        self.vector_store_type = self.config.get("vector_store_type", "chroma")
+        if not hasattr(self, 'vector_store_type'):
+            raise AttributeError("DocumentProcessor must have a 'vector_store_type' attribute")
+        
+        self.logger = EmojiLogger
+        self.logger.startup("Document processor initialized.")
+        
+        self.initialize_vector_store()
         
         # Configure text splitter
         self.text_splitter = RecursiveCharacterTextSplitter(
@@ -63,9 +67,31 @@ class DocumentProcessor:
         with open(metadata_file, 'w') as f:
             json.dump(self.documents, f)
     
+    def initialize_vector_store(self):
+        """Initialize the vector store based on configuration."""
+        try:
+            if self.vector_store_type == "chroma":
+                self.vector_store = Chroma(
+                    persist_directory="data/vector_store",
+                    embedding_function=self.embeddings
+                )
+                self.logger.success("Vector store initialized.")
+            else:
+                raise ValueError("Unsupported vector store type.")
+        except Exception as e:
+            self.logger.error(f"Error initializing vector store: {str(e)}")
+
+    def set_vector_store(self, store_type: str):
+        """Change the vector store type and reinitialize."""
+        if store_type != self.vector_store_type:
+            self.vector_store_type = store_type
+            self.initialize_vector_store()
+            self._load_document_metadata()
+
     def process_document(self, file_path: str, file_name: str) -> Optional[str]:
         """Process a document and store it in the vector database."""
         try:
+            self.logger.document_process("Processing document...")
             # Load document based on file type
             loader = self._get_document_loader(file_path)
             if not loader:
@@ -172,3 +198,25 @@ class DocumentProcessor:
         except Exception as e:
             logging.error(f"Error clearing documents: {str(e)}")
             raise
+    
+    def clear_vector_store(self) -> bool:
+        """Clear all documents from the vector store and metadata."""
+        try:
+            if self.vector_store_type == "chroma":
+                # Clear the Chroma collection
+                collection = self.vector_store._collection
+                # Get all document IDs
+                all_ids = collection.get()['ids']
+                if all_ids:
+                    # Delete all documents by their IDs
+                    collection.delete(ids=all_ids)
+                self.vector_store.persist()
+            
+            # Clear document metadata
+            self.documents = {}
+            self._save_document_metadata()
+            
+            return True
+        except Exception as e:
+            logging.error(f"Error clearing vector store: {str(e)}")
+            return False

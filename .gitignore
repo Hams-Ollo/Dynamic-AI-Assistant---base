@@ -179,9 +179,15 @@ Thumbs.db
 .streamlit/secrets.toml
 .streamlit/config.toml
 
+# Logs
+logs/application.log
+
+# Data files
+data/documents/
+data/vector_store/*.sqlite3
+data\documents
+
 # Local development
-logs/
-log/
 media/
 static/
 uploads/
@@ -189,7 +195,6 @@ uploads/
 tmp/
 
 # Project specific
-data/documents/
 data/audio_scrapes/
 data/text_scrapes/
 

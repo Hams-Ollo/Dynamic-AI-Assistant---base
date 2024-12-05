@@ -23,6 +23,15 @@ A sophisticated, production-ready AI assistant framework built with LLaMA 3 70B 
   - 🎯 Streamlit for responsive UI
   - ⚙️ Unified configuration management
 
+- **Enhanced Logging**:
+  - 📝 Emoji-enhanced logging for better traceability
+
+- **Improved UI**:
+  - 🖥️ Updated chat interface with emoji roles
+
+- **Document Upload Enhancements**:
+  - 📤 Improved document processing capabilities
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -33,12 +42,14 @@ A sophisticated, production-ready AI assistant framework built with LLaMA 3 70B 
 ### Setup
 
 1. **Clone the repository:**
+
    ```bash
    git clone [your-repository-url]
    cd Dynamic-AI-Assistant-base
    ```
 
 2. **Set up virtual environment:**
+
    ```bash
    python -m venv venv
    
@@ -50,24 +61,27 @@ A sophisticated, production-ready AI assistant framework built with LLaMA 3 70B 
    ```
 
 3. **Install dependencies:**
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. **Configure environment:**
+
    ```bash
    cp .env.example .env
    # Add your Groq API key and other settings to .env
    ```
 
-5. **Start the application:**
+5. **Run the application:**
+
    ```bash
    streamlit run frontend/Home.py
    ```
 
 ## 📁 Project Structure
 
-```
+```curl
 Dynamic-AI-Assistant-base/
 ├── app/
 │   ├── agents/
@@ -99,6 +113,7 @@ The application uses a unified configuration system (`app/utils/config.py`) that
 - Path management
 
 Configuration can be customized through:
+
 1. Environment variables
 2. `.env` file
 3. Runtime configuration
@@ -115,7 +130,7 @@ Configuration can be customized through:
 
 Key customization points:
 
-1. **Document Processing**: 
+1. **Document Processing**:
    - Adjust chunking in `document_processor.py`
    - Configure embedding models
    - Modify vector store settings
@@ -141,3 +156,7 @@ We welcome contributions! Please:
 ## 📄 License
 
 [Your License] - See LICENSE file for details
+
+## 📦 Versioning
+
+This release is version 1.1.0, featuring new enhancements and improvements.
