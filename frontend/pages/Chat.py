@@ -22,6 +22,15 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from app.agents.chat_agent import ChatAgent
 from app.utils.document_processor import DocumentProcessor
 
+def get_or_create_event_loop():
+    """Get the current event loop or create a new one."""
+    try:
+        return asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop
+
 def process_message(agent: ChatAgent, message: str, doc_processor: Optional[DocumentProcessor] = None):
     """Process a message using the chat agent with document context."""
     print("\n=== Processing New Message ===")
@@ -50,13 +59,9 @@ def process_message(agent: ChatAgent, message: str, doc_processor: Optional[Docu
         
         # Process message with context
         print("Sending request to ChatAgent...")
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            response = loop.run_until_complete(agent.process_message(message, context))
-            return response.get('response', 'I encountered an error while processing your request. Please try again.')
-        finally:
-            loop.close()
+        loop = get_or_create_event_loop()
+        response = loop.run_until_complete(agent.process_message(message, context))
+        return response.get('response', 'I encountered an error while processing your request. Please try again.')
         
     except Exception as e:
         print(f"\nError from ChatAgent: {str(e)}")
@@ -72,15 +77,10 @@ def initialize_chat_system():
     if 'chat_agent' not in st.session_state:
         print("Initializing AI Chat System...")
         chat_agent = ChatAgent()
-        # Run async initialization in a new event loop
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            loop.run_until_complete(chat_agent.initialize())
-            st.session_state.chat_agent = chat_agent
-            print("Chat system initialized successfully!")
-        finally:
-            loop.close()
+        loop = get_or_create_event_loop()
+        loop.run_until_complete(chat_agent.initialize())
+        st.session_state.chat_agent = chat_agent
+        print("Chat system initialized successfully!")
 
 def display_chat_interface():
     """Display the main chat interface."""
@@ -96,6 +96,7 @@ def display_chat_interface():
     # Initialize rate limit counter if not exists
     if "rate_limit_count" not in st.session_state:
         st.session_state.rate_limit_count = 0
+        st.session_state.last_rate_limit = None
         print("Initialized rate limit counter")
 
     # Display chat history
@@ -103,17 +104,22 @@ def display_chat_interface():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
+    # Reset rate limit if enough time has passed
+    if st.session_state.get("last_rate_limit"):
+        time_since_limit = time.time() - st.session_state.last_rate_limit
+        if time_since_limit > 60:  # Reset after 1 minute
+            st.session_state.rate_limit_count = 0
+            st.session_state.last_rate_limit = None
+            print("Rate limit counter reset")
+
     # Chat input
     if prompt := st.chat_input("What would you like to know?", disabled=st.session_state.get("rate_limit_count", 0) > 3):
-        print(f"\n=== New Chat Input ===\nUser: {prompt[:100]}...")  # Print first 100 chars
+        print(f"\n=== New Chat Input ===\nUser: {prompt[:100]}...")
         
-        # Rate limit warning
+        # Rate limit handling
         if st.session_state.get("rate_limit_count", 0) > 2:
-            print("Rate limit threshold exceeded - adding delay")
-            st.warning("⚠️ Multiple rate limits detected. Please wait a few minutes before continuing.")
-            time.sleep(2)  # Add a small delay
-            st.session_state.rate_limit_count = max(0, st.session_state.rate_limit_count - 1)
-            print(f"Updated rate limit count: {st.session_state.rate_limit_count}")
+            st.warning("⚠️ Rate limit reached. Please wait a minute before continuing.")
+            st.session_state.last_rate_limit = time.time()
             return
 
         # Add user message to chat history
@@ -124,25 +130,36 @@ def display_chat_interface():
         # Get AI response
         with st.chat_message("assistant"):
             print("\nProcessing message with ChatAgent...")
-            if not hasattr(st.session_state, 'chat_agent') or not st.session_state.chat_agent.chain:
-                initialize_chat_system()
-            response = process_message(
-                st.session_state.chat_agent,
-                prompt,
-                st.session_state.doc_processor if hasattr(st.session_state, 'doc_processor') else None
-            )
-            if response:
-                print(f"Response received ({len(response)} chars)")
-                if "rate limit" in response.lower():
-                    st.session_state.rate_limit_count += 1
-                    print(f"Rate limit count increased to {st.session_state.rate_limit_count}")
-                else:
-                    st.session_state.rate_limit_count = max(0, st.session_state.rate_limit_count - 1)
-                    print(f"Rate limit count decreased to {st.session_state.rate_limit_count}")
+            message_placeholder = st.empty()
+            message_placeholder.markdown("🤔 Thinking...")
+            
+            try:
+                if not hasattr(st.session_state, 'chat_agent') or not st.session_state.chat_agent.chain:
+                    initialize_chat_system()
                 
-                st.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
-                print("Chat history updated with new response")
+                response = process_message(
+                    st.session_state.chat_agent,
+                    prompt,
+                    st.session_state.doc_processor if hasattr(st.session_state, 'doc_processor') else None
+                )
+                
+                if response:
+                    print(f"Response received ({len(response)} chars)")
+                    if "rate limit" in response.lower():
+                        st.session_state.rate_limit_count += 1
+                        st.session_state.last_rate_limit = time.time()
+                        print(f"Rate limit count increased to {st.session_state.rate_limit_count}")
+                    else:
+                        st.session_state.rate_limit_count = max(0, st.session_state.rate_limit_count - 1)
+                        print(f"Rate limit count decreased to {st.session_state.rate_limit_count}")
+                    
+                    message_placeholder.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                    print("Chat history updated with new response")
+                    
+            except Exception as e:
+                message_placeholder.markdown(f"❌ Error: {str(e)}")
+                print(f"Error processing message: {str(e)}")
 
 def main():
     """Main Streamlit application."""

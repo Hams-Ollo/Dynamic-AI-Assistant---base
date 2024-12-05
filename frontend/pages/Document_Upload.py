@@ -21,7 +21,11 @@ from app.utils.memory import MemoryManager
 def initialize_document_processor():
     """Initialize the document processor if not in session state."""
     if 'doc_processor' not in st.session_state:
-        st.session_state.doc_processor = DocumentProcessor()
+        # Get selected vector store type from session state or default to chroma
+        vector_store_type = st.session_state.get("selected_vectorstore", "chroma")
+        st.session_state.doc_processor = DocumentProcessor(
+            config={"vector_store_type": vector_store_type}
+        )
 
 def process_uploaded_files(files: List[Any]):
     """Process uploaded files and store them in vector database."""
@@ -127,11 +131,48 @@ def document_management_ui():
     )
     temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.7, 0.1)
     context_window = st.sidebar.slider("Context Window Size", 1000, 8192, 2000, 100)
+    
+    # Vector Store Settings
+    st.sidebar.subheader("Vector Store Settings")
     vector_store = st.sidebar.selectbox(
         "Vector Store",
         ["Chroma", "Pinecone", "Faiss"],
         index=0  # Set Chroma as default
     )
+    
+    # Clear Vector Store Button with confirmation
+    if st.sidebar.button("🗑️ Clear All Documents", type="secondary", help="Remove all uploaded documents and clear vector store"):
+        # Create a confirmation dialog using columns
+        col1, col2 = st.sidebar.columns(2)
+        st.sidebar.warning("⚠️ This will permanently delete all uploaded documents. Are you sure?")
+        
+        if col1.button("✓ Yes, Clear All", key="confirm_clear"):
+            try:
+                logging.info("Attempting to clear vector store and documents...")
+                
+                # Clear vector store
+                if hasattr(st.session_state, 'doc_processor'):
+                    if st.session_state.doc_processor.clear_vector_store():
+                        # Clear all files in the documents directory
+                        docs_dir = Path("documents")
+                        if docs_dir.exists():
+                            for file in docs_dir.glob("*"):
+                                try:
+                                    file.unlink()
+                                except Exception as e:
+                                    logging.error(f"Error deleting file {file}: {str(e)}")
+                        
+                        st.sidebar.success("Successfully cleared all documents!")
+                        st.session_state.messages = []  # Clear chat history
+                        st.experimental_rerun()  # Refresh the UI
+                    else:
+                        st.sidebar.error("Failed to clear documents. Please try again.")
+            except Exception as e:
+                logging.error(f"Error clearing documents: {str(e)}")
+                st.sidebar.error(f"Error clearing documents: {str(e)}")
+        
+        if col2.button("✗ Cancel", key="cancel_clear"):
+            st.experimental_rerun()  # Refresh the UI to remove the confirmation
     
     # Initialize session state for tags if not exists
     if 'document_tags' not in st.session_state:

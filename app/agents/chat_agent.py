@@ -1,39 +1,71 @@
 """
 Chat agent with RAG capabilities.
 """
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Callable
 import logging
 import asyncio
 import time
 from datetime import datetime, timedelta
 
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, BaseMessage
+from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_groq import ChatGroq
-from langchain_core.runnables import RunnableWithMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from app.utils.memory import MemoryManager
 
+class ChatMessageHistory(BaseChatMessageHistory):
+    """Custom message history implementation."""
+    
+    def __init__(self):
+        """Initialize an empty message store."""
+        super().__init__()
+        self.messages: List[BaseMessage] = []
+    
+    def add_message(self, message: BaseMessage) -> None:
+        """Add a message to the store."""
+        self.messages.append(message)
+    
+    def clear(self) -> None:
+        """Clear all messages from the store."""
+        self.messages = []
+
+    async def aget_messages(self) -> List[BaseMessage]:
+        """Get message history asynchronously.
+        
+        This is a required method from BaseChatMessageHistory.
+        The 'a' prefix stands for 'async'.
+        """
+        return self.messages.copy()
+        
+    def get_messages(self) -> List[BaseMessage]:
+        """Get message history synchronously."""
+        return self.messages.copy()
+
 class ChatAgent:
     """Chat agent with document-aware conversation capabilities."""
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """Initialize chat agent with configuration."""
-        self.config = config or {}
-        self.memory_manager = None
-        self.llm = None
+    def __init__(self):
+        """Initialize chat agent."""
+        self.logger = logging.getLogger(__name__)
         self.chain = None
-        self.message_history = []
-        
-        # Rate limiting parameters
+        self.llm = None
+        self.memory_manager = None
+        self.message_histories: Dict[str, ChatMessageHistory] = {}
         self.last_request_time = None
         self.request_count = 0
-        self.max_requests_per_hour = 100  # Adjust based on your API tier
+        self.max_requests_per_hour = 500  # Adjust based on your API tier
         self.cooldown_period = 3600  # 1 hour in seconds
         
         # Configure logging
         logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger(__name__)
+    
+    def get_message_history(self, session_id: str) -> ChatMessageHistory:
+        """Get or create message history for a session."""
+        if session_id not in self.message_histories:
+            self.message_histories[session_id] = ChatMessageHistory()
+        return self.message_histories[session_id]
     
     def _check_rate_limit(self):
         """Check if we're within rate limits."""
@@ -81,19 +113,38 @@ class ChatAgent:
                 self.logger.error(f"Failed to initialize LLM: {str(llm_error)}")
                 raise Exception("Failed to initialize language model. Please check your API key and try again.") from llm_error
             
-            # Initialize message history
-            self.message_history = []
-            
             # Initialize the chain using the newer RunnableWithMessageHistory approach
             prompt = ChatPromptTemplate.from_messages([
-                ("system", "You are a helpful AI assistant."),
+                ("system", """You are a versatile AI assistant capable of both natural conversation and document analysis. Your role is to:
+
+1. General Conversation:
+   - Engage in natural, friendly dialogue on any topic
+   - Draw from your broad knowledge base to provide helpful information
+   - Share insights, examples, and explanations across various subjects
+   - Maintain a conversational and approachable tone
+
+2. Document-Specific Assistance:
+   - When referencing uploaded documents, use simple numbered citations [¹], [²], etc.
+   - Place citations immediately after the referenced information
+   - At the end of responses using document data, add a "Sources:" section with brief document references
+   - Format sources as: [1] Document_Name.pdf, [2] Document_Name.txt, etc.
+
+3. Adaptive Interaction:
+   - Seamlessly switch between general conversation and document-specific help
+   - Combine both knowledge sources when beneficial
+   - Ask for clarification when needed
+   - Keep citations minimal and unobtrusive
+
+Remember: Engage naturally in conversation while providing clear but subtle document citations when referencing uploaded materials. Citations should enhance, not interrupt, the conversation flow."""),
                 MessagesPlaceholder(variable_name="history"),
                 ("human", "{input}")
             ])
+
+            chain = prompt | self.llm
             
             self.chain = RunnableWithMessageHistory(
-                prompt | self.llm,
-                lambda session_id: self.message_history,
+                chain,
+                lambda session_id: self.get_message_history(session_id),
                 input_messages_key="input",
                 history_messages_key="history"
             )
@@ -135,19 +186,32 @@ class ChatAgent:
             
             # Prepare context-enhanced prompt
             if additional_context:
-                context_str = "\n\nRelevant context from documents:\n" + "\n---\n".join(additional_context)
+                formatted_context = []
+                for i, ctx in enumerate(additional_context, 1):
+                    formatted_context.append(f"[{i}] {ctx}")
+                context_str = "\n\nSources:\n" + "\n".join(formatted_context)
                 full_message = f"{message}\n\n{context_str}"
             else:
                 full_message = message
             
-            # Get response using the newer approach
+            # Add user message to history before processing
+            history = self.get_message_history("default")
+            history.add_message(HumanMessage(content=full_message))
+            
+            # Get response using the newer approach with explicit session ID
             response = await self.chain.ainvoke(
                 {"input": full_message},
-                config={"configurable": {"session_id": "default"}}
+                {"configurable": {"session_id": "default"}}
             )
             
+            # Extract response content
+            response_text = response.content if hasattr(response, 'content') else str(response)
+            
+            # Add AI response to history
+            history.add_message(AIMessage(content=response_text))
+            
             return {
-                "response": response.content if hasattr(response, 'content') else str(response),
+                "response": response_text,
                 "sources": [{"content": ctx} for ctx in additional_context] if additional_context else None
             }
             
@@ -160,7 +224,7 @@ class ChatAgent:
         if self.chain and hasattr(self.chain, 'memory'):
             self.chain.memory.clear()
             self.logger.info("Conversation context cleared")
-
+    
     def get_response(self, message: str) -> str:
         """Synchronously get a response from the chat agent.
         
