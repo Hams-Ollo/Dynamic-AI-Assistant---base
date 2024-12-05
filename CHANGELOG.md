@@ -7,15 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.0] - 2024-12-05
+## [1.2.0] - 2024-03-21
 
 ### Added
+
+- Enhanced emoji logger with security features
+  - Added security-specific logging stream
+  - Implemented log rotation with size limits
+  - Added new security-related emoji categories
+  - Added extra data support for security events
+- New security logging methods
+  - `security_alert` for security-related events
+  - `validation_error` for validation failures
+  - `rate_limit_exceeded` for rate limiting events
+- New secure environment variable management system
+  - Type-safe configuration validation
+  - Comprehensive error handling
+  - Structured configuration objects
+- Advanced logging system with rotation and separate security logs
+  - Configurable log levels and formatters
+  - Separate security logging stream
+  - Log file rotation with size limits
+- Request validation middleware
+  - Rate limiting implementation
+  - Request size validation
+  - Input sanitization
+- Enhanced security documentation and guidelines
+
+### Changed
+
+- Consolidated logging system into enhanced emoji logger
+- Removed duplicate logging implementations
+- Improved logging configuration with rotation support
+- Added structured logging for security events
+- Improved .env.example with detailed documentation and security guidelines
+- Restructured configuration system for better maintainability
+- Enhanced error handling across the application
+
+### Security
+
+- Added dedicated security log file with rotation
+- Enhanced logging for security-related events
+- Added extra data support for security logging
+- Added comprehensive security validation for all environment variables
+- Implemented request size limits and rate limiting
+- Added security-focused logging for suspicious activities
+
+## [1.1.0] - 2024-12-05
+
+### Added (1.1.0)
 
 - Revamped UI with emoji roles and improved layout.
 - Enhanced document management, including stash clearing.
 - Emoji-enhanced logging for better traceability.
 
-### Changed
+### Changed (1.1.0)
 
 - Updated README and documentation for new features.
 - Improved session state management for smoother user experience.
