@@ -18,6 +18,7 @@ from chromadb.config import Settings
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 
 from .emoji_logger import EmojiLogger
+from tqdm import tqdm
 
 class DocumentProcessor:
     """Handles document processing, chunking, and vectorization."""
@@ -84,7 +85,90 @@ class DocumentProcessor:
             self._vector_store = None
             raise
 
-    def process_document(self, file_path: str, file_name: str) -> Optional[str]:
+    def _determine_category(self, filename: str, content: str = "") -> str:
+        """Determine document category based on filename and content."""
+        filename_lower = filename.lower()
+        
+        # Technical Documentation
+        if any(term in filename_lower for term in ["readme", "guide", "manual", "documentation", "api", "spec", "reference"]):
+            return "Technical Documentation"
+            
+        # Training & Education
+        elif any(term in filename_lower for term in ["training", "course", "study guide", "tutorial", "lesson", "educational"]):
+            return "Training & Education"
+            
+        # Legal & Compliance
+        elif any(term in filename_lower for term in ["epa", "section 608", "policy", "regulation", "compliance", "legal", "agreement"]):
+            return "Legal & Compliance"
+            
+        # Reports & Analysis
+        elif any(term in filename_lower for term in ["report", "analysis", "review", "assessment", "evaluation", "metrics"]):
+            return "Reports & Analysis"
+            
+        # Project Management
+        elif any(term in filename_lower for term in ["project", "plan", "roadmap", "timeline", "milestone", "sprint", "backlog"]):
+            return "Project Management"
+            
+        # User Data & Profiles
+        elif any(term in filename_lower for term in ["user", "profile", "account", "customer", "client", "candidate"]):
+            return "User Data & Profiles"
+            
+        # Medical & Healthcare
+        elif any(term in filename_lower for term in ["clinical", "patient", "medical", "health", "diagnosis", "treatment"]):
+            return "Medical & Healthcare"
+            
+        # Templates & Forms
+        elif any(term in filename_lower for term in ["template", "form", "worksheet", "checklist", "questionnaire"]):
+            return "Templates & Forms"
+            
+        # Research & Development
+        elif any(term in filename_lower for term in ["research", "experiment", "study", "investigation", "findings", "development"]):
+            return "Research & Development"
+            
+        # Standard Operating Procedures
+        elif any(term in filename_lower for term in ["sop", "procedure", "protocol", "process", "workflow", "instruction"]):
+            return "Standard Operating Procedures"
+        
+        # Try to determine from file extension for specific file types
+        ext = Path(filename).suffix.lower()
+        if ext in ['.pdf', '.docx', '.doc', '.txt', '.md']:
+            content_lower = content.lower()
+            
+            # Additional content-based categorization
+            if any(term in content_lower for term in ["confidential", "private", "sensitive", "classified"]):
+                return "Confidential Documents"
+            elif any(term in content_lower for term in ["meeting", "minutes", "agenda", "discussion"]):
+                return "Meeting Notes & Minutes"
+            elif any(term in content_lower for term in ["contract", "agreement", "terms", "conditions"]):
+                return "Contracts & Agreements"
+        
+        return "Miscellaneous"
+
+    def get_available_categories(self) -> List[str]:
+        """Get list of categories from currently stored documents."""
+        try:
+            if self._vector_store is None:
+                self.initialize_vector_store()
+            
+            # Get all documents
+            results = self._vector_store.get()
+            if not results or not results['metadatas']:
+                return []
+            
+            # Extract unique categories
+            categories = set()
+            for metadata in results['metadatas']:
+                category = metadata.get('category')
+                if category:
+                    categories.add(category)
+            
+            return sorted(list(categories))
+            
+        except Exception as e:
+            self.logger.error(f"Error getting categories: {str(e)}")
+            return []
+
+    def process_document(self, file_path: str, filename: str) -> Optional[Dict]:
         """Process a document and store it in the vector database."""
         try:
             if self._vector_store is None:
@@ -103,6 +187,14 @@ class DocumentProcessor:
                 
             document = loader.load()[0]
             
+            # Store original content in metadata directory
+            content_path = self.documents_path / f"{Path(filename).stem}_content.txt"
+            with open(content_path, "w", encoding="utf-8") as f:
+                f.write(document.page_content)
+            
+            # Determine category
+            category = self._determine_category(filename, document.page_content)
+            
             # Generate document ID
             doc_id = str(uuid.uuid4())
             
@@ -114,21 +206,26 @@ class DocumentProcessor:
             chunk_texts = []
             chunk_metadatas = []
             
-            for i, split in enumerate(splits):
-                chunk_id = f"{doc_id}_chunk_{i}"
-                chunk_ids.append(chunk_id)
-                chunk_texts.append(split.page_content)
-                
-                metadata = {
-                    "document_id": doc_id,
-                    "filename": file_name,
-                    "file_size": file_size,
-                    "file_type": Path(file_path).suffix.lower()[1:],
-                    "added_date": datetime.now().isoformat(),
-                    "chunk_index": i,
-                    "total_chunks": len(splits)
-                }
-                chunk_metadatas.append(metadata)
+            # Disable tqdm output to terminal
+            with tqdm(total=len(splits), desc="Chunks", file=open(os.devnull, 'w')) as pbar:
+                for i, split in enumerate(splits):
+                    chunk_id = f"{doc_id}_chunk_{i}"
+                    chunk_ids.append(chunk_id)
+                    chunk_texts.append(split.page_content)
+                    
+                    metadata = {
+                        "document_id": doc_id,
+                        "filename": filename,
+                        "file_size": file_size,
+                        "file_type": Path(file_path).suffix.lower()[1:],
+                        "added_date": datetime.now().isoformat(),
+                        "chunk_index": i,
+                        "total_chunks": len(splits),
+                        "category": category,
+                        "content_path": str(content_path)
+                    }
+                    chunk_metadatas.append(metadata)
+                    pbar.update(1)
             
             # Add to vector store using ChromaDB's native interface
             self._vector_store.add(
@@ -137,11 +234,19 @@ class DocumentProcessor:
                 metadatas=chunk_metadatas
             )
             
-            self.logger.success(f"Document processed: {file_name}")
-            return doc_id
+            self.logger.success(f"Document processed: {filename}")
+            return {
+                'id': doc_id,
+                'filename': filename,
+                'file_size': file_size,
+                'file_type': Path(file_path).suffix.lower()[1:],
+                'category': category,
+                'added_date': datetime.now().isoformat(),
+                'content_path': str(content_path)
+            }
             
         except Exception as e:
-            self.logger.error(f"Error processing document {file_name}: {str(e)}")
+            self.logger.error(f"Error processing document {filename}: {str(e)}")
             return None
 
     def _get_document_loader(self, file_path: str):
@@ -207,13 +312,34 @@ class DocumentProcessor:
                         'filename': metadata.get('filename'),
                         'file_size': metadata.get('file_size'),
                         'file_type': metadata.get('file_type'),
-                        'added_date': metadata.get('added_date')
+                        'added_date': metadata.get('added_date'),
+                        'category': metadata.get('category', 'Uncategorized')
                     }
             
             return list(unique_docs.values())
             
         except Exception as e:
             self.logger.error(f"Error listing documents: {str(e)}")
+            return []
+
+    def get_available_categories(self) -> List[str]:
+        """Get list of categories from currently stored documents."""
+        try:
+            documents = self.list_documents()
+            if not documents:
+                return []
+            
+            # Extract unique categories
+            categories = set()
+            for doc in documents:
+                category = doc.get('category')
+                if category:
+                    categories.add(category)
+            
+            return sorted(list(categories))
+            
+        except Exception as e:
+            self.logger.error(f"Error getting categories: {str(e)}")
             return []
 
     def delete_document(self, doc_id: str) -> bool:
@@ -268,3 +394,15 @@ class DocumentProcessor:
         except Exception as e:
             self.logger.error(f"Error clearing documents: {str(e)}")
             return False
+
+    def get_document_content(self, filename: str) -> Optional[str]:
+        """Get the original content of a document."""
+        try:
+            content_path = self.documents_path / f"{Path(filename).stem}_content.txt"
+            if content_path.exists():
+                with open(content_path, "r", encoding="utf-8") as f:
+                    return f.read()
+            return None
+        except Exception as e:
+            self.logger.error(f"Error getting document content: {str(e)}")
+            return None
