@@ -94,3 +94,7 @@ python-docx>=1.1.0
 markdown>=3.5.2
 redis>=5.0.2
 uuid>=1.30
+
+# Document Processing
+docx2txt==0.8
+pdfminer.six==20240706
