@@ -22,13 +22,16 @@ from app.utils.memory import MemoryManager
 
 def initialize_document_processor():
     """Initialize the document processor if not already initialized."""
-    if 'doc_processor' not in st.session_state:
-        st.session_state.doc_processor = DocumentProcessor(
-            config={"vector_store_type": "chroma"}
-        )
-    elif not hasattr(st.session_state.doc_processor, 'vector_store'):
-        # Reinitialize if vector store is missing
-        st.session_state.doc_processor.initialize_vector_store()
+    if not hasattr(st.session_state, 'doc_processor'):
+        try:
+            config = {
+                "vector_store_type": "chroma"
+            }
+            st.session_state.doc_processor = DocumentProcessor(config=config)
+        except Exception as e:
+            st.error(f"Failed to initialize document processor: {str(e)}")
+            return False
+    return True
 
 def clear_session_state():
     """Clear all document-related session state."""
@@ -48,6 +51,38 @@ def clear_session_state():
 
 def process_uploaded_files(files: List[Any]):
     """Process uploaded files and store them in vector database."""
+    if not initialize_document_processor():
+        return [], []
+        
+    successful_files = []
+    failed_files = []
+    
+    for uploaded_file in files:
+        try:
+            # Save uploaded file temporarily
+            temp_path = Path("temp") / uploaded_file.name
+            temp_path.parent.mkdir(exist_ok=True)
+            
+            with open(temp_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            
+            # Process the document
+            success = st.session_state.doc_processor.process_document(
+                str(temp_path),
+                uploaded_file.name
+            )
+            
+            if success:
+                successful_files.append(uploaded_file)
+            else:
+                failed_files.append((uploaded_file, "Processing failed"))
+                
+            # Clean up temp file
+            temp_path.unlink()
+            
+        except Exception as e:
+            failed_files.append((uploaded_file, str(e)))
+            
     progress_bar = st.progress(0)
     status_text = st.empty()
     error_container = st.empty()
@@ -60,37 +95,16 @@ def process_uploaded_files(files: List[Any]):
         for idx, file in enumerate(files):
             status_text.text(f"Processing {file.name}...")
             
-            try:
-                # Save uploaded file temporarily
-                with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.name).suffix) as tmp_file:
-                    tmp_file.write(file.getvalue())
-                    tmp_path = tmp_file.name
-
-                # Process the document
-                doc_id = st.session_state.doc_processor.process_document(tmp_path, file.name)
+            if file in successful_files:
+                processed += 1
                 
-                if not doc_id:
-                    errors.append(f"Failed to process {file.name}")
-                else:
-                    processed += 1
+            # Update progress
+            progress = (idx + 1) / len(files)
+            progress_bar.progress(progress)
                 
-                # Update progress
-                progress = (idx + 1) / len(files)
-                progress_bar.progress(progress)
-                
-                # Clean up temporary file
-                try:
-                    os.unlink(tmp_path)
-                except Exception as e:
-                    logging.warning(f"Error cleaning up temporary file {tmp_path}: {str(e)}")
-
-            except Exception as e:
-                errors.append(f"Error processing {file.name}: {str(e)}")
-                logging.error(f"Error processing {file.name}: {str(e)}")
-
         # Show final status
-        if errors:
-            error_text = "\n".join(errors)
+        if failed_files:
+            error_text = "\n".join([f"Failed to process {file[0].name}: {file[1]}" for file in failed_files])
             error_container.error(f"Failed to process some files:\n{error_text}")
         
         if processed > 0:
@@ -132,57 +146,64 @@ def handle_file_upload():
             # Add processed files to tracking set
             st.session_state.processed_files.update(f.name for f in new_files)
 
-def handle_document_deletion(doc_id: str, filename: str):
+def handle_document_deletion(doc_id: str, filename: str, col1, col2, col3, col4):
     """Handle deletion of a single document."""
     if not hasattr(st.session_state, 'doc_processor'):
         st.error("Document processor not initialized")
         return
 
-    # Create columns for better message placement
-    col1, col2 = st.columns([6, 1])
-    with col1:
-        with st.spinner(""):
-            success = st.session_state.doc_processor.delete_document(doc_id)
-            if success:
-                # Remove the file from processed files tracking
-                if 'processed_files' in st.session_state:
-                    st.session_state.processed_files.discard(filename)
-                
-                # Increment the uploader reset counter
-                if 'uploader_reset_counter' not in st.session_state:
-                    st.session_state.uploader_reset_counter = 0
-                st.session_state.uploader_reset_counter += 1
-                
-                # Use a more subtle success message with custom styling
-                message_container = st.empty()
-                message_container.markdown("""
-                    <style>
-                    .delete-success {
-                        padding: 0.75rem;
-                        border-radius: 0.5rem;
-                        background-color: rgba(40, 167, 69, 0.1);
-                        border: 1px solid rgba(40, 167, 69, 0.2);
-                        color: rgb(40, 167, 69);
-                        text-align: center;
-                        margin: 1rem 0;
-                        animation: fadeInOut 2s ease-in-out forwards;
-                        position: relative;
-                        z-index: 1000;
-                    }
-                    @keyframes fadeInOut {
-                        0% { opacity: 0; transform: translateY(0); }
-                        10% { opacity: 1; transform: translateY(0); }
-                        90% { opacity: 1; transform: translateY(0); }
-                        100% { opacity: 0; }
-                    }
-                    </style>
-                    <div class="delete-success">Document deleted successfully</div>
-                    """, unsafe_allow_html=True)
-                time.sleep(2)
-                message_container.empty()
-                st.rerun()
-            else:
-                st.error("Failed to delete document")
+    with st.spinner(""):
+        success = st.session_state.doc_processor.delete_document(doc_id)
+        if success:
+            # Remove the file from processed files tracking
+            if 'processed_files' in st.session_state:
+                st.session_state.processed_files.discard(filename)
+            
+            # Increment the uploader reset counter
+            if 'uploader_reset_counter' not in st.session_state:
+                st.session_state.uploader_reset_counter = 0
+            st.session_state.uploader_reset_counter += 1
+            
+            # Show inline success message
+            with col1:
+                st.success("Document deleted successfully")
+            with col2:
+                st.write("")
+            with col3:
+                st.write("")
+            with col4:
+                st.write("")
+            
+            time.sleep(1.5)
+            st.rerun()
+        else:
+            st.error("Failed to delete document")
+
+def display_uploaded_documents():
+    """Display the list of uploaded documents with delete buttons."""
+    if not hasattr(st.session_state, 'doc_processor'):
+        return
+
+    docs = st.session_state.doc_processor.list_documents()
+    if not docs:
+        st.write("No documents uploaded yet.")
+        return
+
+    st.markdown("#### 📄 Uploaded Documents")
+    
+    for doc in docs:
+        col1, col2, col3, col4 = st.columns([3, 2, 1, 0.5])
+        
+        with col1:
+            st.write(doc.get('filename', 'Unknown'))
+        with col2:
+            st.write(doc.get('added_date', 'Unknown').split('T')[0])
+        with col3:
+            file_size = doc.get('file_size', 0)
+            st.write(humanize.naturalsize(file_size))
+        with col4:
+            if st.button("🗑️", key=f"delete_{doc['id']}", help="Delete document"):
+                handle_document_deletion(doc['id'], doc['filename'], col1, col2, col3, col4)
 
 def handle_clear_all_documents():
     """Handle clearing all documents."""
@@ -196,11 +217,7 @@ def handle_clear_all_documents():
 
     with st.spinner("Clearing all documents..."):
         try:
-            # First cleanup vector store
-            st.session_state.doc_processor._cleanup_vector_store()
-            # Reinitialize vector store
-            st.session_state.doc_processor.initialize_vector_store()
-            # Clear documents
+            # Clear all documents using the processor method
             success = st.session_state.doc_processor.clear_all_documents()
             
             if success:
@@ -226,29 +243,6 @@ def handle_clear_all_documents():
             st.error(f"Error clearing documents: {str(e)}")
             logging.error(f"Error clearing documents: {str(e)}")
 
-def display_uploaded_documents():
-    """Display the list of uploaded documents with delete buttons."""
-    if not hasattr(st.session_state, 'doc_processor'):
-        st.info("No documents uploaded yet")
-        return
-        
-    docs = st.session_state.doc_processor.list_documents()
-    if not docs:
-        st.info("No documents uploaded yet")
-        return
-
-    st.markdown("#### 📄 Uploaded Documents")
-    
-    for doc in docs:
-        col1, col2, col3 = st.columns([6, 2, 1])
-        with col1:
-            st.text(doc['name'])
-        with col2:
-            st.text(f"Added: {doc['timestamp'].split('T')[0]}")
-        with col3:
-            if st.button("🗑️", key=f"delete_{doc['id']}", help="Delete document"):
-                handle_document_deletion(doc['id'], doc['name'])
-
 def document_management_ui():
     """Document management interface."""
     st.title("Document Management")
@@ -264,14 +258,22 @@ def document_management_ui():
         st.selectbox("Filter by Category", ["Choose an option"], key="filter_category")
     
     # Document stats
-    total_docs = len(st.session_state.doc_processor.list_documents()) if hasattr(st.session_state, 'doc_processor') else 0
+    docs = st.session_state.doc_processor.list_documents() if hasattr(st.session_state, 'doc_processor') else []
+    total_docs = len(docs)
+    
+    # Calculate total size from document metadata
+    total_size = sum(doc.get('file_size', 0) for doc in docs)
+    
+    # Calculate unique file types
+    file_types = len(set(Path(doc['filename']).suffix for doc in docs)) if docs else 0
+    
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Total Documents", total_docs)
     with col2:
-        st.metric("Total Size", "0 Bytes")  # You can calculate actual size if needed
+        st.metric("Total Size", humanize.naturalsize(total_size) if total_size > 0 else "0 Bytes")
     with col3:
-        st.metric("File Types", "1")  # You can calculate actual types if needed
+        st.metric("File Types", file_types)
     
     # Document Upload Section
     handle_file_upload()

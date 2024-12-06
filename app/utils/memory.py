@@ -7,7 +7,8 @@ import logging
 from langchain_core.memory import BaseMemory
 from langchain_community.chat_message_histories import ChatMessageHistory, RedisChatMessageHistory
 from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
+import chromadb
+from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 import json
 from datetime import datetime
 import numpy as np
@@ -112,10 +113,9 @@ class MemoryManager:
         """Initialize vector store memory."""
         try:
             # Initialize embeddings with a local model
-            self.embeddings = HuggingFaceEmbeddings(
+            self.embeddings = SentenceTransformerEmbeddingFunction(
                 model_name="all-MiniLM-L6-v2",
-                model_kwargs={'device': 'cpu'},
-                encode_kwargs={'normalize_embeddings': True}
+                device="cpu"
             )
             
             # Initialize vector store with collection name
@@ -330,10 +330,9 @@ class MemoryManager:
         """Set up the vector store for semantic search."""
         try:
             # Initialize embeddings
-            self.embeddings = HuggingFaceEmbeddings(
+            self.embeddings = SentenceTransformerEmbeddingFunction(
                 model_name="all-MiniLM-L6-v2",
-                model_kwargs={'device': 'cpu'},
-                encode_kwargs={'normalize_embeddings': True}
+                device="cpu"
             )
             
             # Set up Chroma store

@@ -1,26 +1,23 @@
-"""
-Document processing and vectorization utilities.
-"""
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 import uuid
 from datetime import datetime
 import logging
 from pathlib import Path
-import shutil
 import os
-import time
-import gc
-from app.utils.emoji_logger import EmojiLogger
+from dotenv import load_dotenv
 
 from langchain_community.document_loaders import (
-    PyPDFLoader,
     TextLoader,
-    UnstructuredWordDocumentLoader,
-    UnstructuredMarkdownLoader
+    UnstructuredMarkdownLoader,
+    PDFMinerLoader,
+    Docx2txtLoader
 )
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
+import chromadb
+from chromadb.config import Settings
+from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+
+from .emoji_logger import EmojiLogger
 
 class DocumentProcessor:
     """Handles document processing, chunking, and vectorization."""
@@ -28,19 +25,12 @@ class DocumentProcessor:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """Initialize document processor with configuration."""
         self.config = config or {}
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name="all-MiniLM-L6-v2"
-        )
-        
-        # Ensure vector_store_type is set
-        self.vector_store_type = self.config.get("vector_store_type", "chroma")
-        if not hasattr(self, 'vector_store_type'):
-            raise AttributeError("DocumentProcessor must have a 'vector_store_type' attribute")
-        
         self.logger = EmojiLogger
-        self.logger.startup("Document processor initialized.")
         
-        # Set up persistent paths
+        # Load environment variables
+        load_dotenv()
+        
+        # Set up paths
         self.base_path = Path("data/documents")
         self.documents_path = self.base_path / "metadata"
         self.vector_store_path = self.base_path / "vector_store"
@@ -49,267 +39,232 @@ class DocumentProcessor:
         self.documents_path.mkdir(parents=True, exist_ok=True)
         self.vector_store_path.mkdir(parents=True, exist_ok=True)
         
-        # Configure Chroma settings
-        self.chroma_settings = {
-            "allow_reset": True,
-            "anonymized_telemetry": False
-        }
-        
-        self.initialize_vector_store()
+        # Initialize embeddings using sentence-transformers (local inference)
+        self.embeddings = SentenceTransformerEmbeddingFunction(
+            model_name="all-MiniLM-L6-v2",
+            device="cpu"
+        )
         
         # Configure text splitter
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
-            chunk_overlap=200,
-            length_function=len,
+            chunk_overlap=200
         )
         
-        self._load_document_metadata()
-    
-    def _load_document_metadata(self):
-        """Load document metadata from storage."""
-        self.documents = {}
-        metadata_file = self.documents_path / "documents.json"
-        if metadata_file.exists():
-            import json
-            with open(metadata_file, 'r') as f:
-                self.documents = json.load(f)
-    
-    def _save_document_metadata(self):
-        """Save document metadata to storage."""
-        metadata_file = self.documents_path / "documents.json"
-        import json
-        with open(metadata_file, 'w') as f:
-            json.dump(self.documents, f, indent=2)
-    
+        # Initialize vector store
+        self._client = None
+        self._vector_store = None
+        self.initialize_vector_store()
+        
+        self.logger.startup("Document processor initialized.")
+
     def initialize_vector_store(self):
-        """Initialize the vector store based on configuration."""
+        """Initialize the vector store."""
         try:
-            if self.vector_store_type == "chroma":
-                # Cleanup existing instance if any
-                self._cleanup_vector_store()
-                
-                # Initialize new database with persistence and settings
-                self._vector_store = Chroma(
-                    persist_directory=str(self.vector_store_path),
-                    embedding_function=self.embeddings,
-                    client_settings=self.chroma_settings
-                )
-                self.logger.success("✅ Vector store initialized.")
-            else:
-                raise ValueError("Unsupported vector store type.")
+            # Initialize ChromaDB client
+            self._client = chromadb.PersistentClient(
+                path=str(self.vector_store_path),
+                settings=Settings(anonymized_telemetry=False)
+            )
+            
+            # Create embedding function wrapper for LangChain embeddings
+            embedding_function = self.embeddings
+            
+            # Get or create collection
+            self._vector_store = self._client.get_or_create_collection(
+                name="documents",
+                embedding_function=embedding_function,
+                metadata={"hnsw:space": "cosine"}
+            )
+            
+            self.logger.success("Vector store initialized.")
+            
         except Exception as e:
             self.logger.error(f"Error initializing vector store: {str(e)}")
-
-    def set_vector_store(self, store_type: str):
-        """Change the vector store type and reinitialize."""
-        if store_type != self.vector_store_type:
-            self.vector_store_type = store_type
-            self.initialize_vector_store()
-            self._load_document_metadata()
+            self._vector_store = None
+            raise
 
     def process_document(self, file_path: str, file_name: str) -> Optional[str]:
         """Process a document and store it in the vector database."""
         try:
+            if self._vector_store is None:
+                self.initialize_vector_store()
+                
             self.logger.document_process("Processing document...")
-            # Load document based on file type
+            
+            # Get file size
+            file_size = Path(file_path).stat().st_size
+            
+            # Load document
             loader = self._get_document_loader(file_path)
-            if not loader:
-                raise ValueError(f"Unsupported file type: {file_path}")
-        
-            # Load and split document
-            doc = loader.load()
-            chunks = self.text_splitter.split_documents(doc)
-        
+            if loader is None:
+                self.logger.error(f"Unsupported file type: {Path(file_path).suffix}")
+                return None
+                
+            document = loader.load()[0]
+            
             # Generate document ID
             doc_id = str(uuid.uuid4())
-        
-            # Add metadata to chunks
-            for chunk in chunks:
-                chunk.metadata.update({
+            
+            # Split document
+            splits = self.text_splitter.split_documents([document])
+            
+            # Process chunks
+            chunk_ids = []
+            chunk_texts = []
+            chunk_metadatas = []
+            
+            for i, split in enumerate(splits):
+                chunk_id = f"{doc_id}_chunk_{i}"
+                chunk_ids.append(chunk_id)
+                chunk_texts.append(split.page_content)
+                
+                metadata = {
                     "document_id": doc_id,
-                    "file_name": file_name,
-                    "chunk_id": str(uuid.uuid4()),
-                    "timestamp": datetime.now().isoformat()
-                })
-        
-            # Store in vector database
-            self._vector_store.add_documents(chunks)
-        
-            # Store document metadata
-            self.documents[doc_id] = {
-                "id": doc_id,
-                "name": file_name,
-                "path": file_path,
-                "timestamp": datetime.now().isoformat(),
-                "num_chunks": len(chunks)
-            }
-            self._save_document_metadata()
-        
+                    "filename": file_name,
+                    "file_size": file_size,
+                    "file_type": Path(file_path).suffix.lower()[1:],
+                    "added_date": datetime.now().isoformat(),
+                    "chunk_index": i,
+                    "total_chunks": len(splits)
+                }
+                chunk_metadatas.append(metadata)
+            
+            # Add to vector store using ChromaDB's native interface
+            self._vector_store.add(
+                ids=chunk_ids,
+                documents=chunk_texts,
+                metadatas=chunk_metadatas
+            )
+            
+            self.logger.success(f"Document processed: {file_name}")
             return doc_id
-        
+            
         except Exception as e:
-            logging.error(f"Error processing document {file_name}: {str(e)}")
-            raise
-    
+            self.logger.error(f"Error processing document {file_name}: {str(e)}")
+            return None
+
     def _get_document_loader(self, file_path: str):
         """Get appropriate document loader based on file type."""
         file_ext = Path(file_path).suffix.lower()
         
         loaders = {
-            '.pdf': PyPDFLoader,
+            '.pdf': PDFMinerLoader,
             '.txt': TextLoader,
-            '.docx': UnstructuredWordDocumentLoader,
-            '.md': UnstructuredMarkdownLoader
+            '.md': UnstructuredMarkdownLoader,
+            '.docx': Docx2txtLoader
         }
         
         loader_class = loaders.get(file_ext)
-        return loader_class(file_path) if loader_class else None
-    
+        if loader_class:
+            return loader_class(file_path)
+        return None
+
     def get_relevant_chunks(self, query: str, num_chunks: int = 5) -> List[Dict[str, Any]]:
         """Retrieve relevant document chunks for a query."""
         try:
-            results = self._vector_store.similarity_search_with_score(
-                query,
-                k=num_chunks
+            if self._vector_store is None:
+                self.initialize_vector_store()
+                
+            query_embedding = self.embeddings.encode([query])[0]
+            results = self._vector_store.query(
+                query_embeddings=[query_embedding],
+                n_results=num_chunks,
+                include=["documents", "metadatas", "distances"]
             )
-        
+            
             return [{
-                'content': doc.page_content,
-                'metadata': doc.metadata,
-                'score': score
-            } for doc, score in results]
-        
+                'content': doc,
+                'metadata': meta,
+                'score': 1 - dist  # Convert distance to similarity score
+            } for doc, meta, dist in zip(
+                results['documents'][0],
+                results['metadatas'][0],
+                results['distances'][0]
+            )]
+            
         except Exception as e:
-            logging.error(f"Error retrieving chunks for query: {str(e)}")
+            self.logger.error(f"Error retrieving chunks: {str(e)}")
             return []
-    
+
     def list_documents(self) -> List[Dict]:
         """List all uploaded documents."""
-        return list(self.documents.values())
-    
+        try:
+            if self._vector_store is None:
+                self.initialize_vector_store()
+            
+            results = self._vector_store.get()
+            if not results or not results['documents']:
+                return []
+            
+            # Group by document_id to get unique documents
+            unique_docs = {}
+            for metadata in results['metadatas']:
+                doc_id = metadata.get('document_id')
+                if doc_id and doc_id not in unique_docs:
+                    unique_docs[doc_id] = {
+                        'id': doc_id,
+                        'filename': metadata.get('filename'),
+                        'file_size': metadata.get('file_size'),
+                        'file_type': metadata.get('file_type'),
+                        'added_date': metadata.get('added_date')
+                    }
+            
+            return list(unique_docs.values())
+            
+        except Exception as e:
+            self.logger.error(f"Error listing documents: {str(e)}")
+            return []
+
+    def delete_document(self, doc_id: str) -> bool:
+        """Delete a document from the vector store."""
+        try:
+            if self._vector_store is None:
+                self.initialize_vector_store()
+            
+            # Find all chunks for this document
+            results = self._vector_store.get(
+                where={"document_id": doc_id}
+            )
+            
+            if results and results['ids']:
+                self._vector_store.delete(
+                    ids=results['ids']
+                )
+                return True
+            
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"Error deleting document: {str(e)}")
+            return False
+
     def _cleanup_vector_store(self):
         """Clean up vector store resources."""
         try:
-            if hasattr(self, '_vector_store'):
-                # Persist any changes
-                if hasattr(self._vector_store, '_client'):
-                    try:
-                        self._vector_store._client.persist()
-                    except Exception as e:
-                        logging.warning(f"Error persisting vector store: {str(e)}")
-                
-                # Explicitly delete client and collection
-                if hasattr(self._vector_store, '_client'):
-                    try:
-                        self._vector_store._client.reset()
-                        delattr(self._vector_store, '_client')
-                    except Exception as e:
-                        logging.warning(f"Error resetting vector store client: {str(e)}")
-            
-            # Clear the vector store reference
-            self._vector_store = None
-            
-            # Force garbage collection
-            gc.collect()
-            
-            # Add a small delay to ensure resources are released
-            time.sleep(0.5)
-            
-        except Exception as e:
-            logging.error(f"Error cleaning up vector store: {str(e)}")
-
-    def delete_document(self, doc_id: str) -> bool:
-        """Delete a document from storage and vector store."""
-        try:
-            # Get document info before deletion
-            doc_info = self.documents.get(doc_id)
-            if not doc_info:
-                logging.warning(f"Document {doc_id} not found")
-                return False
-
-            # Clean up vector store first
-            self._cleanup_vector_store()
-            
-            # Remove from documents metadata
-            if doc_id in self.documents:
-                del self.documents[doc_id]
-                self._save_document_metadata()
-
-            # Delete the physical file if it exists
-            file_path = doc_info.get('path')
-            if file_path and os.path.exists(file_path):
-                try:
-                    os.remove(file_path)
-                except PermissionError:
-                    logging.warning(f"Permission error deleting file {file_path}, will retry...")
-                    time.sleep(1)  # Wait a bit and retry
-                    os.remove(file_path)
-
-            # Reinitialize vector store
-            self.initialize_vector_store()
-            
+            if self._client is not None:
+                self._client.delete_collection("documents")
+                self._vector_store = None
+                self._client = None
             return True
-
         except Exception as e:
-            logging.error(f"Error deleting document: {str(e)}")
+            self.logger.error(f"Error cleaning up vector store: {str(e)}")
             return False
 
     def clear_all_documents(self) -> bool:
-        """Clear all documents from storage."""
+        """Clear all documents from the vector store."""
         try:
-            # Clean up vector store first
-            self._cleanup_vector_store()
+            if self._vector_store is None:
+                self.initialize_vector_store()
             
-            # Clear document metadata
-            self.documents = {}
-            self._save_document_metadata()
-            
-            # Clear vector store directory
-            if self.vector_store_path.exists():
-                try:
-                    shutil.rmtree(self.vector_store_path)
-                    self.vector_store_path.mkdir(exist_ok=True)
-                except Exception as e:
-                    logging.error(f"Error clearing vector store directory: {str(e)}")
-                    return False
-            
-            # Reinitialize vector store
-            self.initialize_vector_store()
-            
-            return True
-            
-        except Exception as e:
-            logging.error(f"Error clearing all documents: {str(e)}")
+            success = self._cleanup_vector_store()
+            if success:
+                # Reinitialize the vector store
+                self.initialize_vector_store()
+                self.logger.success("All documents cleared successfully")
+                return True
             return False
-
-    def clear_vector_store(self) -> bool:
-        """Clear all documents from the vector store and reset metadata."""
-        try:
-            logging.info("Clearing vector store and metadata...")
-            
-            # First cleanup existing vector store
-            self._cleanup_vector_store()
-            
-            # Delete the entire vector store directory
-            if self.vector_store_path.exists():
-                shutil.rmtree(self.vector_store_path)
-            
-            # Reset metadata file
-            metadata_file = self.documents_path / "documents.json"
-            if metadata_file.exists():
-                metadata_file.unlink()
-            
-            # Reset internal state
-            self.documents = {}
-            self._save_document_metadata()
-            
-            # Reinitialize empty vector store
-            self.initialize_vector_store()
-            
-            logging.info("Successfully cleared vector store and metadata")
-            return True
             
         except Exception as e:
-            logging.error(f"Error clearing vector store: {str(e)}")
+            self.logger.error(f"Error clearing documents: {str(e)}")
             return False
