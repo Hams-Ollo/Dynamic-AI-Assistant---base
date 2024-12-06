@@ -7,9 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Enhanced document deletion UI with smooth animations
+  - Added custom styled success messages
+  - Implemented auto-dismissing notifications
+  - Added loading spinners for better feedback
+- Improved file upload tracking system
+  - Added session-based file tracking to prevent duplicates
+  - Implemented proper cleanup on file deletion
+  - Enhanced upload state management
+- Improved document management interface
+  - Added individual document delete buttons with better styling
+  - Enhanced document list display with timestamps
+  - Better visual feedback for document operations
+
+### Changed
+
+- Improved vector store initialization
+  - Added proper Chroma settings with allow_reset enabled
+  - Enhanced client settings configuration
+  - Better cleanup and resource management
+- Enhanced document management UI
+  - Removed duplicate headers
+  - Better success message positioning
+  - Improved overall layout consistency
+- Updated file upload workflow
+  - Better handling of upload state after deletions
+  - Improved progress indicator cleanup
+  - Enhanced error handling and validation
+- Refined document deletion process
+  - Improved vector store cleanup during deletion
+  - Enhanced file handle management
+  - Better resource cleanup sequence
+  - Added retry mechanism for file operations
+
+### Fixed
+
+- Fixed document re-upload issues after deletion
+- Resolved vector store reset warnings
+- Fixed duplicate Document Upload headers
+- Improved success message positioning and animation
+- Enhanced file tracking to prevent duplicate uploads
+- Fixed vector store cleanup during document deletion
+  - Added proper client cleanup sequence
+  - Improved file handle release
+  - Enhanced error handling for file operations
+- Resolved "Clear All Documents" button reliability
+  - Added proper state management
+  - Improved feedback messages
+  - Enhanced cleanup sequence
+- Removed incorrect `persist()` method calls from document deletion operations
+- Added enhanced logging for document deletion tracking
+- Fixed document deletion and clear all documents functionality
+- Improved vector store cleanup during document deletion
+
 ## [1.2.0] - 2024-03-21
 
-### Added
+### Added (1.2.0)
 
 - Enhanced emoji logger with security features
   - Added security-specific logging stream
@@ -38,7 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added error handling for missing or invalid variables
   - Enhanced logging for validation errors
 
-### Changed
+### Changed (1.2.0)
 
 - Consolidated logging system into enhanced emoji logger
 - Removed duplicate logging implementations
@@ -97,12 +152,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for LLaMA 3 70B model
 - ChromaDB integration improvements
 
-### Fixed
+### Fixed (0.4.0)
 
 - ChromaDB dependency and import issues
 - Streamlit frontend compatibility
 - Environment variable parsing
 - Documentation consistency
+- Removed incorrect `persist()` method calls from document deletion operations
+- Added enhanced logging for document deletion tracking
+- Fixed document deletion and clear all documents functionality
+- Improved vector store cleanup during document deletion
 
 ## [0.3.0] - 2024-03-19
 

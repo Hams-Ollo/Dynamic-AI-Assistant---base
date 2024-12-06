@@ -195,8 +195,8 @@ uploads/
 tmp/
 
 # Project specific
-data/audio_scrapes/
-data/text_scrapes/
+scripts/audio_scrapes/
+scripts/text_scrapes/
 
 # Database files
 *.sqlite

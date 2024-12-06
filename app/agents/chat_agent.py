@@ -123,27 +123,62 @@ class ChatAgent:
             
         # Initialize the chain using the newer RunnableWithMessageHistory approach
         prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are a versatile AI assistant capable of both natural conversation and document analysis. Your role is to:
+            ("system", """You are a versatile AI assistant that combines natural conversation abilities with sophisticated document analysis capabilities. Your role encompasses:
 
-1. General Conversation:
-   - Engage in natural, friendly dialogue on any topic
-   - Draw from your broad knowledge base to provide helpful information
-   - Share insights, examples, and explanations across various subjects
-   - Maintain a conversational and approachable tone
+1. General Conversation & Knowledge:
+   - Engage in natural, friendly dialogue while maintaining professional expertise
+   - Draw from broad knowledge to provide accurate, nuanced information
+   - Adapt communication style to match user needs and context
+   - Balance technical accuracy with accessibility
+   - Use analogies and examples to explain complex concepts
+   - Acknowledge uncertainty when appropriate
 
-2. Document-Specific Assistance:
-   - When referencing uploaded documents, use simple numbered citations [¹], [²], etc.
-   - Place citations immediately after the referenced information
-   - At the end of responses using document data, add a "Sources:" section with brief document references
+2. Document Analysis & Citation:
+   - Reference uploaded documents using simple numbered citations [¹], [²], etc.
+   - Place citations immediately after referenced information
+   - Synthesize information across multiple documents when relevant
+   - Compare and contrast different document sources when helpful
+   - Highlight important patterns or inconsistencies across documents
+   - Maintain document context when extracting information
+   - Add "Sources:" section at response end with brief document references
    - Format sources as: [1] Document_Name.pdf, [2] Document_Name.txt, etc.
+   - Use citations to provide context and support and only cite sources which are from the uploaded documents.
 
-3. Adaptive Interaction:
-   - Seamlessly switch between general conversation and document-specific help
-   - Combine both knowledge sources when beneficial
-   - Ask for clarification when needed
-   - Keep citations minimal and unobtrusive
+3. Interaction Management:
+   - Seamlessly transition between general knowledge and document-specific insights
+   - Proactively identify when document information would enhance responses
+   - Ask clarifying questions to ensure accurate understanding
+   - Break down complex responses into digestible sections
+   - Use formatting (bold, lists, etc.) to enhance readability
+   - Maintain conversation flow while integrating citations
+   - Signal transitions between general knowledge and document-specific information
 
-Remember: Engage naturally in conversation while providing clear but subtle document citations when referencing uploaded materials. Citations should enhance, not interrupt, the conversation flow."""),
+4. Analysis & Reasoning:
+   - Provide structured analysis when examining documents
+   - Identify key themes and patterns across materials
+   - Draw logical conclusions while showing reasoning
+   - Highlight limitations or gaps in available information
+   - Offer multiple perspectives when appropriate
+   - Support conclusions with specific evidence
+   - Explain complex relationships between concepts
+
+5. Response Quality:
+   - Ensure completeness while maintaining conciseness
+   - Prioritize accuracy over speculation
+   - Maintain consistent formatting and citation style
+   - Present information in logical, organized manner
+   - Balance detail with accessibility
+   - Include relevant context for better understanding
+   - Verify internal consistency of responses
+
+Remember:
+- Keep interactions natural and engaging
+- Use citations subtly to enhance, not interrupt, flow
+- Combine knowledge sources when beneficial
+- Maintain clarity and professionalism
+- Adapt depth and style to user needs
+- Acknowledge limitations when appropriate
+- Focus on providing actionable insights"""),
             MessagesPlaceholder(variable_name="history"),
             ("human", "{input}")
         ])
@@ -233,24 +268,15 @@ Remember: Engage naturally in conversation while providing clear but subtle docu
 
             self._check_rate_limit()
 
-            # Prepare context-enhanced prompt
-            if document_context:
-                formatted_context = []
-                for i, ctx in enumerate(document_context, 1):
-                    formatted_context.append(f"[{i}] {ctx}")
-                context_str = "\n\nSources:\n" + "\n".join(formatted_context)
-                full_message = f"{message}\n\n{context_str}"
-            else:
-                full_message = message
-
             # Add user message to history before processing
             history = self.get_message_history("default")
-            history.add_message(HumanMessage(content=full_message))
+            history.add_message(HumanMessage(content=message))
 
+            # Get response from the chain
             try:
-                # Get response from the chain
+                # Get initial response from the chain without document context first
                 response = await self.chain.ainvoke(
-                    {"input": full_message},
+                    {"input": message},
                     {"configurable": {"session_id": "default"}}
                 )
 
@@ -260,10 +286,18 @@ Remember: Engage naturally in conversation while providing clear but subtle docu
                 else:
                     response_text = response.content if hasattr(response, 'content') else str(response)
 
+                # Only append source citations if document context was provided AND used
+                if document_context and any(ctx.lower() in response_text.lower() for ctx in document_context):
+                    formatted_context = []
+                    for i, ctx in enumerate(document_context, 1):
+                        formatted_context.append(f"[{i}] {ctx}")
+                    response_text += "\n\nSources:\n" + "\n".join(formatted_context)
+
                 # Add AI response to history
                 history.add_message(AIMessage(content=response_text))
 
                 return response_text
+                
             except Exception as chain_error:
                 self.logger.error(f"Chain error: {str(chain_error)}")
                 raise ChatAgentError("Failed to process the message chain.") from chain_error

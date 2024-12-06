@@ -121,7 +121,7 @@ def display_welcome():
         st.markdown("""
             <div class="metric-card">
                 <div class="metric-value">Groq</div>
-                <p>Powered by Mixtral-8x7B</p>
+                <p>Powered by llama3-70b</p>
             </div>
         """, unsafe_allow_html=True)
     
@@ -136,8 +136,8 @@ def display_welcome():
     with col3:
         st.markdown("""
             <div class="metric-card">
-                <div class="metric-value">RAG</div>
-                <p>Enhanced Responses</p>
+                <div class="metric-value">Custom RAG</div>
+                <p>Contextual Responses from Documents</p>
             </div>
         """, unsafe_allow_html=True)
 
