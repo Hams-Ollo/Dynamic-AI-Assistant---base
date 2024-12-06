@@ -13,8 +13,10 @@ A sophisticated, production-ready AI assistant framework built with LLaMA 3 70B 
 - **Document Management**:
   - 📄 Support for multiple formats (PDF, TXT, DOCX, MD)
   - 🔄 Advanced document processing and vectorization
-  - 🏷️ Document tagging and categorization
+  - 🗑️ Robust document deletion with resource cleanup
   - 🔎 Full-text and semantic search
+  - 🔄 Efficient vector store management
+  - 🧹 Automatic resource cleanup and optimization
 
 - **Modern Architecture**:
   - 🚀 LLaMA 3 70B via Groq for state-of-the-art responses
@@ -22,12 +24,18 @@ A sophisticated, production-ready AI assistant framework built with LLaMA 3 70B 
   - 💾 ChromaDB for efficient vector storage
   - 🎯 Streamlit for responsive UI
   - ⚙️ Unified configuration management
+  - 🤗 Local inference with SentenceTransformers
 
 - **Enhanced Logging**:
   - 📝 Emoji-enhanced logging for better traceability
+  - 🔍 Detailed error tracking and reporting
+  - 📊 Improved operation status feedback
 
 - **Improved UI**:
   - 🖥️ Updated chat interface with emoji roles
+  - 📋 Enhanced document management interface
+  - 🔔 Smooth notifications and feedback
+  - 🎨 Better visual consistency
 
 - **Document Upload Enhancements**:
   - 📤 Improved document processing capabilities

@@ -29,38 +29,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enhanced client settings configuration
   - Better cleanup and resource management
 - Enhanced document management UI
-  - Removed duplicate headers
-  - Better success message positioning
-  - Improved overall layout consistency
-- Updated file upload workflow
-  - Better handling of upload state after deletions
-  - Improved progress indicator cleanup
-  - Enhanced error handling and validation
-- Refined document deletion process
-  - Improved vector store cleanup during deletion
-  - Enhanced file handle management
-  - Better resource cleanup sequence
-  - Added retry mechanism for file operations
+- Switched to SentenceTransformerEmbeddingFunction for local inference
+- Improved error handling in document processing
 
 ### Fixed
 
-- Fixed document re-upload issues after deletion
-- Resolved vector store reset warnings
-- Fixed duplicate Document Upload headers
-- Improved success message positioning and animation
-- Enhanced file tracking to prevent duplicate uploads
-- Fixed vector store cleanup during document deletion
-  - Added proper client cleanup sequence
-  - Improved file handle release
-  - Enhanced error handling for file operations
-- Resolved "Clear All Documents" button reliability
-  - Added proper state management
-  - Improved feedback messages
-  - Enhanced cleanup sequence
-- Removed incorrect `persist()` method calls from document deletion operations
-- Added enhanced logging for document deletion tracking
-- Fixed document deletion and clear all documents functionality
-- Improved vector store cleanup during document deletion
+- Resolved document deletion issues
+  - Fixed metadata key inconsistencies
+  - Added proper cleanup of vector store resources
+  - Improved error handling for file operations
+- Fixed "Clear All" functionality
+  - Added robust vector store cleanup
+  - Implemented proper resource management
+  - Enhanced error recovery
+- Improved memory management
+  - Added garbage collection after vector store operations
+  - Implemented retry mechanism for file operations
+  - Enhanced resource cleanup
 
 ## [1.2.0] - 2024-03-21
 
