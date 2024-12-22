@@ -1,6 +1,8 @@
-# 🤖 Dynamic AI Assistant Base
+## 🎡 **Overview**
 
-A sophisticated, production-ready AI assistant framework built with LLaMA 3 70B (via Groq), LangChain, and Streamlit. This project provides a robust foundation for developing advanced AI applications with RAG capabilities and multi-modal interactions.
+**S.O.C.R.A.T.E.S.** integrates a sophisticated multi-agent framework with state-of-the-art AI models, providing a powerful platform for collaborative task management and resource optimization. Whether it’s analyzing documents, generating content, or executing complex workflows, the system’s agents work together to deliver streamlined and intelligent solutions.
+
+### **Core Features**
 
 ## 🌟 Key Features
 
